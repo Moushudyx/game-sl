@@ -1,0 +1,33 @@
+.game-card {
+  height: 100%;
+  background: linear-gradient(145deg, rgba(30, 40, 54, 0.25), rgba(28, 35, 46, 0.45));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+  color: #e7ecf5;
+
+  .ant-card-head-title {
+    padding: 12px 0;
+  }
+  .card-title-text {
+    margin: 0;
+    color: #f7fbff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: all;
+  }
+
+  .card-title-time {
+    flex-shrink: 0;
+    color: #ecf8fd;
+    user-select: none;
+  }
+
+  .path-text {
+    display: block;
+    word-break: break-all;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+  }
+}

@@ -1,10 +1,25 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import 'antd/dist/reset.css'
+import { ConfigProvider, theme } from 'antd'
 import App from './App'
+import 'antd/dist/reset.css'
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#4d92ce',
+          colorInfo: '#4d92ce',
+          colorError: '#e4585a',
+          colorWarning: '#e4aa37',
+          colorSuccess: '#68c937',
+          borderRadius: 4,
+        },
+        algorithm: theme.darkAlgorithm,
+      }}
+    >
+      <App />
+    </ConfigProvider>
   </React.StrictMode>
 )

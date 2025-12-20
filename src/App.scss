@@ -1,0 +1,89 @@
+:root {
+  font-family: 'IBM Plex Sans', 'Noto Sans SC', 'PingFang SC', 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at 20% 20%, #233143, #0d1016 40%, #0b0f14 100%) fixed no-repeat;
+  color: #e7ecf5;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: transparent;
+}
+
+.app-shell {
+  min-height: 100vh;
+  background: transparent;
+}
+
+.app-header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 64px;
+  /* padding: 16px 24px; */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(135deg, rgba(71, 126, 232, 0.35), rgba(121, 212, 250, 0.2));
+  backdrop-filter: blur(6px);
+  z-index: 99;
+
+  .header-content {
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+
+  .brand {
+    margin: 0;
+    color: #f7fbff !important;
+    letter-spacing: 0.5px;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+.app-body {
+  width: 100%;
+  max-width: 1280px + 24px * 2;
+  margin: 64px auto;
+  padding: 0 24px 32px;
+  // padding: 0 0 48px;
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    gap: 16px;
+
+    .cards-grid-item {
+      width: 100%;
+    }
+  }
+}
+
+.ant-typography,
+.ant-card-extra,
+.ant-select-selector,
+.ant-btn {
+  color: #e7ecf5;
+}
+
+.ant-tabs-nav {
+  margin: 0 0 16px;
+}
+
+.ant-empty-description {
+  color: rgba(231, 236, 245, 0.75);
+}
+
+.ant-layout-content .ant-tabs-content-holder {
+  background: rgba(13, 16, 22, 0.6);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 16px;
+}
