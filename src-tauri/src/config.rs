@@ -25,7 +25,7 @@ pub struct GameEntry {
     pub kind: Option<String>,
 }
 
-// 获取当前可读写的工作目录（软件同级目录下的 game-sl）
+/// 获取当前可读写的工作目录（软件同级目录下的 game-sl）
 pub fn software_workdir() -> Result<PathBuf, String> {
     let exe_path = env::current_exe().map_err(|e| format!("无法获取程序路径: {e}"))?;
     let base_dir = exe_path
@@ -36,7 +36,7 @@ pub fn software_workdir() -> Result<PathBuf, String> {
     Ok(workdir)
 }
 
-// 确保 config.json 存在，不存在则根据内置模板生成
+/// 确保 config.json 存在，不存在则根据内置模板生成
 fn ensure_config_file() -> Result<PathBuf, String> {
     let workdir = software_workdir()?;
     let config_path = workdir.join(CONFIG_FILE_NAME);
@@ -47,7 +47,7 @@ fn ensure_config_file() -> Result<PathBuf, String> {
     Ok(config_path)
 }
 
-// 读取配置，必要时创建默认文件
+/// 读取配置，必要时创建默认文件
 pub fn read_config() -> Result<AppConfig, String> {
     let config_path = ensure_config_file()?;
     let content = fs::read_to_string(&config_path)

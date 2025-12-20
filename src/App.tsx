@@ -78,9 +78,16 @@ function App() {
         config.games.map(async (game) => {
           let exists = false
           try {
+            // console.log('game.path', game.path)
+            // console.log('selectedSteamUID', selectedSteamUID)
+            // const resolvedPath = await invoke<boolean>('resolve_template_path', {
+            //   template: game.path,
+            //   steamUid: selectedSteamUID ?? null,
+            // })
+            // console.log('resolvedPath', resolvedPath)
             exists = await invoke<boolean>('check_save_path', {
               path: game.path,
-              steam_uid: selectedSteamUID ?? null,
+              steamUid: selectedSteamUID ?? null,
             })
           } catch (err) {
             console.error(err)

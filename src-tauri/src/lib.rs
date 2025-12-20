@@ -12,6 +12,7 @@ pub fn run() {
             commands::get_steam_install_dir,
             commands::get_steam_uid_list,
             commands::check_save_path,
+            paths::resolve_template_path,
             commands::get_appdata_root_path
         ])
         .run(tauri::generate_context!())
