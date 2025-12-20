@@ -1,0 +1,48 @@
+{
+  "settings": {},
+  "games": [
+    {
+      "name": "怪物猎人 荒野",
+      "path": "{Steam}\\userdata\\{SteamUID}\\582010\\remote",
+      "icon": "",
+      "type": "steam"
+    },
+    {
+      "name": "怪物猎人 崛起",
+      "path": "{Steam}\\userdata\\{SteamUID}\\1446780\\remote",
+      "icon": "",
+      "type": "steam"
+    },
+    {
+      "name": "怪物猎人 世界",
+      "path": "{Steam}\\userdata\\{SteamUID}\\2246340\\remote",
+      "icon": "",
+      "type": "steam"
+    },
+    {
+      "name": "艾尔登法环",
+      "path": "{AppData}\\Roaming\\EldenRing",
+      "icon": "",
+      "type": "userdata"
+    },
+    {
+      "name": "艾尔登法环 黑夜君临",
+      "path": "{AppData}\\Roaming\\Nightreign",
+      "icon": "",
+      "type": "userdata"
+    },
+    {
+      "name": "无人深空",
+      "path": "{AppData}\\Roaming\\HelloGames\\NMS",
+      "icon": "",
+      "type": "userdata"
+    },
+    {
+      "name": "无限机兵",
+      "path": "{AppData}\\LocalLow\\SenseGames\\AILIMIT",
+      "icon": "",
+      "type": "userdata"
+    }
+  ],
+  "version": 1
+}
