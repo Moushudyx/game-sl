@@ -162,13 +162,13 @@ function App() {
       <Layout className="app-shell">
         <Layout.Header className="app-header">
           <Flex align="center" justify="space-between" className="header-content">
-            <Flex vertical gap={4}>
+            <Flex vertical justify='center' gap={4} className="header-content__left">
               <Title level={3} className="brand">
                 游戏存档助手
               </Title>
               {/* <Text type="secondary">按需检测存档路径，备份/复原入口预留</Text> */}
             </Flex>
-            <Space size="middle" align="center">
+            <Space size="middle" align="center" className="header-content__right">
               <div className="pill">
                 <Text strong>Steam UID</Text>
                 <Divider type="vertical" />
