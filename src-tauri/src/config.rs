@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::{env, fs, path::PathBuf};
 
 const WORK_DIR_NAME: &str = "game-sl";
@@ -47,10 +48,48 @@ fn ensure_config_file() -> Result<PathBuf, String> {
     Ok(config_path)
 }
 
-/// 读取配置，必要时创建默认文件
+/// 读取配置，必要时创建默认文件（如不存在则初始化默认配置）
 pub fn read_config() -> Result<AppConfig, String> {
     let config_path = ensure_config_file()?;
     let content = fs::read_to_string(&config_path)
         .map_err(|e| format!("读取配置失败: {e}"))?;
     serde_json::from_str(&content).map_err(|e| format!("解析配置失败: {e}"))
+}
+
+/// 写回配置文件，保留格式化
+pub fn write_config(config: &AppConfig) -> Result<(), String> {
+    let config_path = ensure_config_file()?;
+    let content = serde_json::to_string_pretty(config)
+        .map_err(|e| format!("序列化配置失败: {e}"))?;
+    fs::write(&config_path, content)
+        .map_err(|e| format!("写入配置失败: {e}"))
+}
+
+/// 更新指定游戏的 last_save 并落盘，返回最新配置
+pub fn update_last_save(game_name: &str, timestamp: i64) -> Result<AppConfig, String> {
+    let mut config = read_config()?;
+    let Some(entry) = config.games.iter_mut().find(|g| g.name == game_name) else {
+        return Err("未找到对应的游戏配置".to_string());
+    };
+
+    entry.last_save = Some(timestamp);
+    write_config(&config)?;
+    Ok(config)
+}
+
+/// 更新 settings 中的单个键值并落盘，返回最新配置
+pub fn update_setting(key: String, value: Value) -> Result<AppConfig, String> {
+    let mut config = read_config()?;
+
+    // 确保 settings 是对象
+    if !config.settings.is_object() {
+        config.settings = serde_json::json!({});
+    }
+
+    if let Some(map) = config.settings.as_object_mut() {
+        map.insert(key, value);
+    }
+
+    write_config(&config)?;
+    Ok(config)
 }

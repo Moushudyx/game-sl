@@ -3,7 +3,7 @@
   "games": [
     {
       "name": "怪物猎人 荒野",
-      "path": "{Steam}\\userdata\\{SteamUID}\\582010\\remote",
+      "path": "{Steam}\\userdata\\{SteamUID}\\2246340\\remote",
       "icon": "",
       "type": "steam"
     },
@@ -15,7 +15,7 @@
     },
     {
       "name": "怪物猎人 世界",
-      "path": "{Steam}\\userdata\\{SteamUID}\\2246340\\remote",
+      "path": "{Steam}\\userdata\\{SteamUID}\\582010\\remote",
       "icon": "",
       "type": "steam"
     },

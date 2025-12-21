@@ -1,6 +1,7 @@
 import { Button, Card, Flex, Space, Tag, Typography } from 'antd'
 import { GameEntry, PathState } from '../types'
 import './GameCard.scss'
+import RelativeTime from './RelativeTime'
 
 const { Title, Text } = Typography
 
@@ -11,20 +12,22 @@ type Props = {
   disabled: boolean
   checkingPaths: boolean
   statusText: string
+  onBackup: (game: GameEntry) => void
+  onViewBackups: (game: GameEntry) => void
+  useRelativeTime: boolean
 }
 
-export function GameCard({ game, pathState, resolvedPath, disabled, checkingPaths, statusText }: Props) {
-  const formatTimestamp = (value?: number) => {
-    if (!value) return '暂无备份'
-    const date = new Date(value)
-    const y = date.getFullYear()
-    const m = String(date.getMonth() + 1).padStart(2, '0')
-    const d = String(date.getDate()).padStart(2, '0')
-    const hh = String(date.getHours()).padStart(2, '0')
-    const mm = String(date.getMinutes()).padStart(2, '0')
-    return `${y}-${m}-${d} ${hh}:${mm}`
-  }
-
+export function GameCard({
+  game,
+  pathState,
+  resolvedPath,
+  disabled,
+  checkingPaths,
+  statusText,
+  onBackup,
+  onViewBackups,
+  useRelativeTime,
+}: Props) {
   return (
     <Card
       key={game.name}
@@ -34,9 +37,11 @@ export function GameCard({ game, pathState, resolvedPath, disabled, checkingPath
           <Title level={4} className="card-title-text">
             {game.name}
           </Title>
-          <Text className="card-title-time" type="secondary" title={formatTimestamp(game.lastSave)}>
-            {formatTimestamp(game.lastSave)}
-          </Text>
+          <RelativeTime
+            value={game.lastSave}
+            className="card-title-time"
+            mode={useRelativeTime ? 'relative' : 'absolute'}
+          />
         </Flex>
       }
       extra={
@@ -56,13 +61,15 @@ export function GameCard({ game, pathState, resolvedPath, disabled, checkingPath
             {statusText}
           </Tag>
         )}
-        {/* 存档路径 */}
+        {/* TODO 存档路径 后边改成可配置的 */}
         <Text className="path-text">{pathState?.resolved || resolvedPath}</Text>
         <Space size="small">
-          <Button type="primary" disabled={disabled || checkingPaths} ghost>
+          <Button type="primary" disabled={disabled || checkingPaths} ghost onClick={() => onBackup(game)}>
             备份
           </Button>
-          <Button disabled={disabled || checkingPaths}>查看备份</Button>
+          <Button disabled={disabled || checkingPaths} onClick={() => onViewBackups(game)}>
+            查看备份
+          </Button>
           <Button disabled={checkingPaths} danger>
             删除游戏
           </Button>

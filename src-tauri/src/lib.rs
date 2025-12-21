@@ -1,3 +1,4 @@
+mod backup;
 mod commands;
 pub mod config;
 mod paths;
@@ -13,7 +14,12 @@ pub fn run() {
             commands::get_steam_uid_list,
             commands::check_save_path,
             paths::resolve_template_path,
-            commands::get_appdata_root_path
+            commands::get_appdata_root_path,
+            commands::backup_game,
+            commands::list_backups,
+            commands::update_backup_remark,
+            commands::get_backup_dir,
+            commands::set_setting
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

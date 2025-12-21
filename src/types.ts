@@ -16,3 +16,20 @@ export type PathState = {
   exists: boolean
   resolved: string
 }
+
+export type BackupEntry = {
+  fileName: string
+  filePath: string
+  timestamp?: number
+  remark?: string
+  size: number
+  timeSource: string
+}
+
+export type BackupResponse = {
+  fileName: string
+  filePath: string
+  timestamp: number
+  remarkPath?: string
+  config: AppConfig
+}

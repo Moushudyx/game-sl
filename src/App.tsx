@@ -10,12 +10,17 @@ import {
   Select,
   Space,
   Spin,
+  Switch,
   Tabs,
   Typography,
   message,
 } from 'antd'
+import { openPath } from '@tauri-apps/plugin-opener'
 import { GameCard } from './components/GameCard'
-import { AppConfig, GameEntry, PathState } from './types'
+import BackupModal from './components/BackupModal'
+import BackupListModal from './components/BackupListModal'
+import EditRemarkModal from './components/EditRemarkModal'
+import { AppConfig, BackupEntry, BackupResponse, GameEntry, PathState } from './types'
 import './App.scss'
 
 const { Title, Text } = Typography
@@ -30,6 +35,15 @@ function App() {
   const [steamUIDs, setSteamUIDs] = useState<string[]>([])
   const [selectedSteamUID, setSelectedSteamUID] = useState<string | undefined>(undefined)
   const [pathState, setPathState] = useState<Record<string, PathState>>({})
+  const [backupModalOpen, setBackupModalOpen] = useState(false)
+  const [backupTarget, setBackupTarget] = useState<GameEntry | null>(null)
+  const [backupListOpen, setBackupListOpen] = useState(false)
+  const [backupListLoading, setBackupListLoading] = useState(false)
+  const [backupList, setBackupList] = useState<BackupEntry[]>([])
+  const [backupListTarget, setBackupListTarget] = useState<GameEntry | null>(null)
+  const [editRemarkOpen, setEditRemarkOpen] = useState(false)
+  const [editRemarkTarget, setEditRemarkTarget] = useState<BackupEntry | null>(null)
+  const [useRelativeTime, setUseRelativeTime] = useState(true)
 
   const hasSteam = useMemo(() => Boolean(steamDir), [steamDir])
 
@@ -48,7 +62,7 @@ function App() {
   const refreshBaseInfo = async () => {
     setLoading(true)
     try {
-      const [cfg, userPath, steamPath, uids] = await Promise.all([
+      const [cfg, userPath, steamPath, uidList] = await Promise.all([
         invoke<AppConfig>('load_config'),
         invoke<string>('get_user_folder'),
         invoke<string | null>('get_steam_install_dir'),
@@ -58,9 +72,15 @@ function App() {
       setConfig(cfg)
       setUserFolder(userPath)
       setSteamDir(steamPath)
-      setSteamUIDs(uids)
-      if (!selectedSteamUID && uids.length > 0) {
-        setSelectedSteamUID(uids[0])
+      setSteamUIDs(uidList)
+      const pref = (cfg.settings as any)?.useRelativeTime
+      if (typeof pref === 'boolean') {
+        setUseRelativeTime(pref)
+      } else {
+        setUseRelativeTime(true)
+      }
+      if (!selectedSteamUID && uidList.length > 0) {
+        setSelectedSteamUID(uidList[0])
       }
     } catch (err) {
       console.error(err)
@@ -112,6 +132,60 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config, selectedSteamUID, steamDir, userFolder])
 
+  const openBackupModal = (game: GameEntry) => {
+    setBackupTarget(game)
+    setBackupModalOpen(true)
+  }
+
+  const submitBackup = async (remark: string) => {
+    if (!backupTarget) return
+    const payloadRemark = remark.trim()
+    const result = await invoke<BackupResponse>('backup_game', {
+      gameName: backupTarget.name,
+      pathTemplate: backupTarget.path,
+      steamUid: selectedSteamUID ?? null,
+      remark: payloadRemark.length > 0 ? payloadRemark : null,
+    })
+    setConfig(result.config)
+    messageApi.success('备份完成')
+    setBackupModalOpen(false)
+  }
+
+  const openBackupList = async (game: GameEntry) => {
+    setBackupListTarget(game)
+    setBackupList([])
+    setBackupListOpen(true)
+    setBackupListLoading(true)
+    try {
+      const list = await invoke<BackupEntry[]>('list_backups', { gameName: game.name })
+      setBackupList(list)
+    } catch (err) {
+      console.error(err)
+      messageApi.error('读取备份列表失败，请稍后重试')
+    } finally {
+      setBackupListLoading(false)
+    }
+  }
+
+  const openEditRemark = (item: BackupEntry) => {
+    setEditRemarkTarget(item)
+    setEditRemarkOpen(true)
+  }
+
+  const submitEditRemark = async (newRemark: string) => {
+    if (!backupListTarget || !editRemarkTarget) return
+    await invoke('update_backup_remark', {
+      gameName: backupListTarget.name,
+      fileName: editRemarkTarget.fileName,
+      remark: newRemark,
+    })
+    messageApi.success('备注已保存')
+    setBackupList((prev) =>
+      prev.map((b) => (b.fileName === editRemarkTarget.fileName ? { ...b, remark: newRemark } : b))
+    )
+    setEditRemarkOpen(false)
+  }
+
   const renderGameCard = (game: GameEntry) => {
     const state = pathState[game.name]
     const noSteam = game.type === 'steam' && !hasSteam
@@ -135,6 +209,9 @@ function App() {
           disabled={disabled}
           checkingPaths={checkingPaths}
           statusText={statusText}
+          onBackup={openBackupModal}
+          onViewBackups={openBackupList}
+          useRelativeTime={useRelativeTime}
         />
       </div>
     )
@@ -156,13 +233,34 @@ function App() {
     return <div className="cards-grid">{config.games.map(renderGameCard)}</div>
   }
 
+  const openBackupFolder = async () => {
+    try {
+      const dir = await invoke<string>('get_backup_dir')
+      await openPath(dir)
+    } catch (err) {
+      console.error(err)
+      messageApi.error('打开备份目录失败')
+    }
+  }
+
+  const updateTimePreference = async (checked: boolean) => {
+    try {
+      const cfg = await invoke<AppConfig>('set_setting', { key: 'useRelativeTime', value: checked })
+      setConfig(cfg)
+      setUseRelativeTime(checked)
+    } catch (err) {
+      console.error(err)
+      messageApi.error('保存时间偏好失败')
+    }
+  }
+
   return (
     <AntApp message={{ maxCount: 1 }}>
       {contextHolder}
       <Layout className="app-shell">
         <Layout.Header className="app-header">
           <Flex align="center" justify="space-between" className="header-content">
-            <Flex vertical justify='center' gap={4} className="header-content__left">
+            <Flex vertical justify="center" gap={4} className="header-content__left">
               <Title level={3} className="brand">
                 游戏存档助手
               </Title>
@@ -193,12 +291,52 @@ function App() {
             defaultActiveKey="main"
             items={[
               { key: 'main', label: '主界面', children: renderMainTab() },
-              { key: 'settings', label: '配置', children: <Empty description="配置页面待实现" /> },
+              {
+                key: 'settings',
+                label: '配置',
+                children: (
+                  <Flex vertical gap={16} style={{ padding: 16 }}>
+                    <Flex align="center" gap={12}>
+                      <Text strong>时间显示方式</Text>
+                      <Space>
+                        <Text type="secondary">使用相对时间</Text>
+                        <Switch checked={useRelativeTime} onChange={updateTimePreference} />
+                      </Space>
+                    </Flex>
+                  </Flex>
+                ),
+              },
               { key: 'about', label: '软件信息', children: <Empty description="软件信息页面待实现" /> },
             ]}
           />
         </Layout.Content>
       </Layout>
+
+      <BackupModal
+        open={backupModalOpen}
+        game={backupTarget}
+        resolvedPath={backupTarget ? resolveTemplate(backupTarget.path) : null}
+        onCancel={() => setBackupModalOpen(false)}
+        onSubmit={submitBackup}
+      />
+
+      <BackupListModal
+        open={backupListOpen}
+        gameName={backupListTarget?.name ?? null}
+        loading={backupListLoading}
+        items={backupList}
+        onCancel={() => setBackupListOpen(false)}
+        onEdit={openEditRemark}
+        onOpenDir={openBackupFolder}
+        useRelativeTime={useRelativeTime}
+      />
+
+      <EditRemarkModal
+        open={editRemarkOpen}
+        item={editRemarkTarget}
+        onCancel={() => setEditRemarkOpen(false)}
+        onSave={submitEditRemark}
+      />
     </AntApp>
   )
 }
