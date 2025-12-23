@@ -1,17 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { invoke } from '@tauri-apps/api/core'
-import {
-  App as AntApp,
-  Button,
-  Divider,
-  Flex,
-  Layout,
-  Select,
-  Space,
-  Typography,
-  message,
-  Segmented,
-} from 'antd'
+import { App as AntApp, Button, Divider, Flex, Layout, Select, Space, Typography, message, Segmented } from 'antd'
 import { openPath } from '@tauri-apps/plugin-opener'
 import { GameCard } from './components/GameCard'
 import BackupModal from './components/BackupModal'
@@ -129,7 +118,7 @@ function App() {
 
   useEffect(() => {
     // 获取后端版本
-    (async () => {
+    ;(async () => {
       try {
         const mod = await import('@tauri-apps/api/app')
         if (mod && typeof mod.getVersion === 'function') {
@@ -203,6 +192,45 @@ function App() {
     setEditRemarkOpen(false)
   }
 
+  // 重新排序 名称顺序传给后端然后刷新配置
+  const applyOrder = async (names: string[]) => {
+    try {
+      const cfg = await invoke<AppConfig>('reorder_games', { order: names })
+      setConfig(cfg)
+    } catch (err) {
+      console.error(err)
+      messageApi.error('保存排序失败')
+    }
+  }
+
+  const moveGameUp = async (game: GameEntry) => {
+    if (!config) return
+    const names = config.games.map((g) => g.name)
+    const idx = names.indexOf(game.name)
+    if (idx <= 0) return
+    ;[names[idx - 1], names[idx]] = [names[idx], names[idx - 1]]
+    await applyOrder(names)
+  }
+
+  const moveGameDown = async (game: GameEntry) => {
+    if (!config) return
+    const names = config.games.map((g) => g.name)
+    const idx = names.indexOf(game.name)
+    if (idx < 0 || idx >= names.length - 1) return
+    ;[names[idx], names[idx + 1]] = [names[idx + 1], names[idx]]
+    await applyOrder(names)
+  }
+
+  const pinGameTop = async (game: GameEntry) => {
+    if (!config) return
+    const names = config.games.map((g) => g.name)
+    const idx = names.indexOf(game.name)
+    if (idx <= 0) return
+    names.splice(idx, 1)
+    names.unshift(game.name)
+    await applyOrder(names)
+  }
+
   const renderGameCard = (game: GameEntry) => {
     const state = pathState[game.name]
     const noSteam = game.type === 'steam' && !hasSteam
@@ -228,6 +256,9 @@ function App() {
           statusText={statusText}
           onBackup={openBackupModal}
           onViewBackups={openBackupList}
+          onMoveUp={moveGameUp}
+          onMoveDown={moveGameDown}
+          onPinTop={pinGameTop}
           useRelativeTime={useRelativeTime}
         />
       </div>
@@ -261,7 +292,7 @@ function App() {
       <Layout className="app-shell">
         <Layout.Header className="app-header">
           <Flex align="center" justify="space-between" className="header-content">
-            <Flex justify="center" align='center' gap={4} className="header-content__left">
+            <Flex justify="center" align="center" gap={4} className="header-content__left">
               <Title level={3} className="brand">
                 游戏存档助手
               </Title>
@@ -298,9 +329,7 @@ function App() {
         </Layout.Header>
         <Layout.Content className="app-body">
           <div className="page-holder">
-            {activePage === 'main' && (
-              <MainPage loading={loading} config={config} renderGameCard={renderGameCard} />
-            )}
+            {activePage === 'main' && <MainPage loading={loading} config={config} renderGameCard={renderGameCard} />}
             {activePage === 'settings' && (
               <SettingsPage useRelativeTime={useRelativeTime} onToggle={updateTimePreference} />
             )}

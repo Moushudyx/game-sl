@@ -3,6 +3,7 @@ import { GameEntry, PathState } from '../types'
 import './GameCard.scss'
 import RelativeTime from './RelativeTime'
 import defaultIcon from '../assets/default-game-icon.svg'
+import { DownOutlined, RiseOutlined, UpOutlined } from '@ant-design/icons'
 
 const { Title, Text } = Typography
 
@@ -15,6 +16,9 @@ type Props = {
   statusText: string
   onBackup: (game: GameEntry) => void
   onViewBackups: (game: GameEntry) => void
+  onMoveUp: (game: GameEntry) => void
+  onMoveDown: (game: GameEntry) => void
+  onPinTop: (game: GameEntry) => void
   useRelativeTime: boolean
 }
 
@@ -27,6 +31,9 @@ export function GameCard({
   statusText,
   onBackup,
   onViewBackups,
+  onMoveUp,
+  onMoveDown,
+  onPinTop,
   useRelativeTime,
 }: Props) {
   const resolveIconSrc = (icon?: string) => {
@@ -56,11 +63,38 @@ export function GameCard({
               />
             </Flex>
             <div className="card-actions">
-              <Button type="link" size="small" disabled={checkingPaths}>
-                前移
+              <Button
+                color="default"
+                variant="text"
+                size="small"
+                icon={<UpOutlined />}
+                title="前移"
+                disabled={checkingPaths}
+                onClick={() => onMoveUp(game)}
+              >
+                {/* 前移 */}
               </Button>
-              <Button type="link" size="small" disabled={checkingPaths}>
-                后移
+              <Button
+                color="default"
+                variant="text"
+                size="small"
+                icon={<DownOutlined />}
+                title="后移"
+                disabled={checkingPaths}
+                onClick={() => onMoveDown(game)}
+              >
+                {/* 后移 */}
+              </Button>
+              <Button
+                color="default"
+                variant="text"
+                size="small"
+                icon={<RiseOutlined />}
+                title="置顶"
+                disabled={checkingPaths}
+                onClick={() => onPinTop(game)}
+              >
+                {/* 置顶 */}
               </Button>
             </div>
           </div>
@@ -71,7 +105,9 @@ export function GameCard({
                 {statusText}
               </Tag>
             )}
-            <Text className="path-text" title={pathState?.resolved || resolvedPath}>{pathState?.resolved || resolvedPath}</Text>
+            <Text className="path-text" title={pathState?.resolved || resolvedPath}>
+              {pathState?.resolved || resolvedPath}
+            </Text>
             <Space size="small">
               <Button type="primary" disabled={disabled || checkingPaths} ghost onClick={() => onBackup(game)}>
                 备份

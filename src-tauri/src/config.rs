@@ -93,3 +93,33 @@ pub fn update_setting(key: String, value: Value) -> Result<AppConfig, String> {
     write_config(&config)?;
     Ok(config)
 }
+
+/// 按名称顺序重排顺序并保存到 JSON，然后返回最新配置（省得前端调 load_config 再查一次）
+pub fn reorder_games(order: Vec<String>) -> Result<AppConfig, String> {
+    let mut config = read_config()?;
+    let original = config.games.clone();
+
+    use std::collections::HashMap; // 感谢 AI
+    let mut by_name: HashMap<String, GameEntry> =
+        config.games.into_iter().map(|g| (g.name.clone(), g)).collect();
+
+    let mut new_games: Vec<GameEntry> = Vec::with_capacity(by_name.len());
+
+    // 先按传入的顺序推进去
+    for name in order {
+        if let Some(entry) = by_name.remove(&name) {
+            new_games.push(entry);
+        }
+    }
+
+    // 再按原顺序补齐遗漏项，以防丢失配置
+    for g in original {
+        if let Some(entry) = by_name.remove(&g.name) {
+            new_games.push(entry);
+        }
+    }
+
+    config.games = new_games;
+    write_config(&config)?;
+    Ok(config)
+}
