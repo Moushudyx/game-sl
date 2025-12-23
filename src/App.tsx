@@ -45,6 +45,7 @@ function App() {
   const [editRemarkTarget, setEditRemarkTarget] = useState<BackupEntry | null>(null)
   const [useRelativeTime, setUseRelativeTime] = useState(true)
   const [activePage, setActivePage] = useState<'main' | 'settings' | 'about'>('main')
+  const [backendVersion, setBackendVersion] = useState<string | undefined>(undefined)
 
   const hasSteam = useMemo(() => Boolean(steamDir), [steamDir])
 
@@ -124,6 +125,21 @@ function App() {
 
   useEffect(() => {
     refreshBaseInfo()
+  }, [])
+
+  useEffect(() => {
+    // 获取后端版本
+    (async () => {
+      try {
+        const mod = await import('@tauri-apps/api/app')
+        if (mod && typeof mod.getVersion === 'function') {
+          const v = await mod.getVersion()
+          setBackendVersion(v)
+        }
+      } catch (_) {
+        // 调用失败时不影响前端运行
+      }
+    })()
   }, [])
 
   useEffect(() => {
@@ -288,7 +304,13 @@ function App() {
             {activePage === 'settings' && (
               <SettingsPage useRelativeTime={useRelativeTime} onToggle={updateTimePreference} />
             )}
-            {activePage === 'about' && <AboutPage />}
+            {activePage === 'about' && (
+              <AboutPage
+                frontendVersion={__APP_VERSION__}
+                backendVersion={backendVersion}
+                onOpenURL={(URL: string) => openPath(URL)}
+              />
+            )}
           </div>
         </Layout.Content>
       </Layout>
