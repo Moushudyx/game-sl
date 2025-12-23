@@ -5,29 +5,75 @@
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
   color: #e7ecf5;
 
-  .ant-card-head-title {
-    padding: 12px 0;
-  }
-  .card-title-text {
-    margin: 0;
-    color: #f7fbff;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    user-select: all;
+  .game-card__inner {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 16px;
+    align-items: stretch;
   }
 
-  .card-title-time {
-    flex-shrink: 0;
-    color: #ecf8fd;
-    user-select: none;
+  .game-card__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    // padding: 8px;
+    // border-radius: 10px;
+    // background: rgba(255, 255, 255, 0.04);
+    // border: 1px dashed rgba(255, 255, 255, 0.08);
+
+    img {
+      width: 100%;
+      height: auto;
+      max-height: 160px;
+      object-fit: contain;
+      border-radius: 4px;
+      filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.25));
+    }
+  }
+
+  .game-card__content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow: hidden;
+  }
+
+  .game-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    .card-title-text {
+      margin: 0;
+      color: #f7fbff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      user-select: all;
+    }
+
+    .card-title-time {
+      flex-shrink: 0;
+      color: #ecf8fd;
+      user-select: none;
+    }
+
+    .card-actions {
+      flex-shrink: 0;
+    }
   }
 
   .path-text {
     display: block;
-    word-break: break-all;
+    width: 100%;
+    // word-break: break-all;
     padding: 8px 10px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.04);
     border: 1px dashed rgba(255, 255, 255, 0.08);
+    box-sizing: border-box;
+    background: rgba(255, 255, 255, 0.04);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }

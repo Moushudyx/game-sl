@@ -4,16 +4,13 @@ import {
   App as AntApp,
   Button,
   Divider,
-  Empty,
   Flex,
   Layout,
   Select,
   Space,
-  Spin,
-  Switch,
-  Tabs,
   Typography,
   message,
+  Segmented,
 } from 'antd'
 import { openPath } from '@tauri-apps/plugin-opener'
 import { GameCard } from './components/GameCard'
@@ -22,6 +19,9 @@ import BackupListModal from './components/BackupListModal'
 import EditRemarkModal from './components/EditRemarkModal'
 import { AppConfig, BackupEntry, BackupResponse, GameEntry, PathState } from './types'
 import './App.scss'
+import MainPage from './pages/MainPage'
+import SettingsPage from './pages/SettingsPage'
+import AboutPage from './pages/AboutPage'
 
 const { Title, Text } = Typography
 
@@ -44,6 +44,7 @@ function App() {
   const [editRemarkOpen, setEditRemarkOpen] = useState(false)
   const [editRemarkTarget, setEditRemarkTarget] = useState<BackupEntry | null>(null)
   const [useRelativeTime, setUseRelativeTime] = useState(true)
+  const [activePage, setActivePage] = useState<'main' | 'settings' | 'about'>('main')
 
   const hasSteam = useMemo(() => Boolean(steamDir), [steamDir])
 
@@ -217,22 +218,6 @@ function App() {
     )
   }
 
-  const renderMainTab = () => {
-    if (loading) {
-      return (
-        <Flex align="center" justify="center" style={{ height: '60vh' }}>
-          <Spin tip="正在加载游戏列表" />
-        </Flex>
-      )
-    }
-
-    if (!config || config.games.length === 0) {
-      return <Empty description="还没有配置任何游戏" />
-    }
-
-    return <div className="cards-grid">{config.games.map(renderGameCard)}</div>
-  }
-
   const openBackupFolder = async () => {
     try {
       const dir = await invoke<string>('get_backup_dir')
@@ -260,16 +245,25 @@ function App() {
       <Layout className="app-shell">
         <Layout.Header className="app-header">
           <Flex align="center" justify="space-between" className="header-content">
-            <Flex vertical justify="center" gap={4} className="header-content__left">
+            <Flex justify="center" align='center' gap={4} className="header-content__left">
               <Title level={3} className="brand">
                 游戏存档助手
               </Title>
-              {/* <Text type="secondary">按需检测存档路径，备份/复原入口预留</Text> */}
+              <Segmented
+                className="page-switch"
+                value={activePage}
+                onChange={(val) => setActivePage(val as 'main' | 'settings' | 'about')}
+                options={[
+                  { label: '主界面', value: 'main' },
+                  { label: '配置', value: 'settings' },
+                  { label: '软件信息', value: 'about' },
+                ]}
+              />
             </Flex>
             <Space size="middle" align="center" className="header-content__right">
               <div className="pill">
                 <Text strong>Steam UID</Text>
-                <Divider type="vertical" />
+                <Divider orientation="vertical" />
                 <Select
                   placeholder="未检测到 steam"
                   style={{ minWidth: 200 }}
@@ -287,28 +281,15 @@ function App() {
           </Flex>
         </Layout.Header>
         <Layout.Content className="app-body">
-          <Tabs
-            defaultActiveKey="main"
-            items={[
-              { key: 'main', label: '主界面', children: renderMainTab() },
-              {
-                key: 'settings',
-                label: '配置',
-                children: (
-                  <Flex vertical gap={16} style={{ padding: 16 }}>
-                    <Flex align="center" gap={12}>
-                      <Text strong>时间显示方式</Text>
-                      <Space>
-                        <Text type="secondary">使用相对时间</Text>
-                        <Switch checked={useRelativeTime} onChange={updateTimePreference} />
-                      </Space>
-                    </Flex>
-                  </Flex>
-                ),
-              },
-              { key: 'about', label: '软件信息', children: <Empty description="软件信息页面待实现" /> },
-            ]}
-          />
+          <div className="page-holder">
+            {activePage === 'main' && (
+              <MainPage loading={loading} config={config} renderGameCard={renderGameCard} />
+            )}
+            {activePage === 'settings' && (
+              <SettingsPage useRelativeTime={useRelativeTime} onToggle={updateTimePreference} />
+            )}
+            {activePage === 'about' && <AboutPage />}
+          </div>
         </Layout.Content>
       </Layout>
 

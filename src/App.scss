@@ -52,6 +52,14 @@ body {
       text-overflow: ellipsis;
     }
 
+    .page-switch {
+      margin-left: 16px;
+      background: transparent;
+      // .ant-segmented-item {
+      //   .ant-segmented-item-selected {}
+      // }
+    }
+
     .pill {
       display: inline-flex;
       align-items: center;
@@ -68,13 +76,13 @@ body {
 .app-body {
   width: 100%;
   max-width: 1280px + 24px * 2;
-  margin: 64px auto;
-  padding: 0 24px 32px;
+  margin: 80px auto 24px;
+  padding: 0 24px 24px;
   // padding: 0 0 48px;
 
   .cards-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
     gap: 16px;
 
     .cards-grid-item {
@@ -90,15 +98,11 @@ body {
   color: #e7ecf5;
 }
 
-.ant-tabs-nav {
-  margin: 0 0 16px;
-}
-
 .ant-empty-description {
   color: rgba(231, 236, 245, 0.75);
 }
 
-.ant-layout-content .ant-tabs-content-holder {
+.page-holder {
   background: rgba(13, 16, 22, 0.6);
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.05);
