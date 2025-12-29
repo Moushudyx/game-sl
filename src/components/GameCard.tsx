@@ -3,7 +3,7 @@ import { GameEntry, PathState } from '../types'
 import './GameCard.scss'
 import RelativeTime from './RelativeTime'
 import defaultIcon from '../assets/default-game-icon.svg'
-import { DownOutlined, RiseOutlined, UpOutlined } from '@ant-design/icons'
+import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, StarOutlined } from '@ant-design/icons'
 
 const { Title, Text } = Typography
 
@@ -71,7 +71,7 @@ export function GameCard({
                 color="default"
                 variant="text"
                 size="small"
-                icon={<UpOutlined />}
+                icon={<ArrowUpOutlined />}
                 title="前移"
                 disabled={checkingPaths}
                 onClick={() => onMoveUp(game)}
@@ -82,7 +82,7 @@ export function GameCard({
                 color="default"
                 variant="text"
                 size="small"
-                icon={<DownOutlined />}
+                icon={<ArrowDownOutlined />}
                 title="后移"
                 disabled={checkingPaths}
                 onClick={() => onMoveDown(game)}
@@ -93,7 +93,7 @@ export function GameCard({
                 color="default"
                 variant="text"
                 size="small"
-                icon={<RiseOutlined />}
+                icon={<StarOutlined />}
                 title="置顶"
                 disabled={checkingPaths}
                 onClick={() => onPinTop(game)}
@@ -119,8 +119,8 @@ export function GameCard({
               <Button disabled={disabled || checkingPaths} onClick={() => onViewBackups(game)}>
                 查看备份
               </Button>
-              <Button disabled={checkingPaths} danger>
-                删除游戏
+              <Button disabled={checkingPaths} icon={<DeleteOutlined />} danger type="text">
+                {/* 删除游戏 */}
               </Button>
             </Space>
           </Space>
