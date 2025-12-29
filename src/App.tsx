@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { App as AntApp, Layout, message } from 'antd'
 import { openPath } from '@tauri-apps/plugin-opener'
 import { GameCard } from './components/GameCard'
@@ -33,6 +33,8 @@ function App() {
     parseRestoreError,
   } = useRestoreFlow()
 
+  const onError = useCallback((msg:string) => messageApi.error(msg), [messageApi])
+
   const {
     loading,
     checkingPaths,
@@ -49,14 +51,14 @@ function App() {
     moveGameUp,
     moveGameDown,
     pinGameTop,
-  } = useAppState({ onError: (msg) => messageApi.error(msg) })
+  } = useAppState({ onError })
 
   const {
     useRelativeTime,
     restoreExtraBackup,
     updateUseRelativeTime,
     updateRestoreExtraBackup,
-  } = useSettings((msg) => messageApi.error(msg))
+  } = useSettings(onError)
   const {
     backupModalOpen,
     backupTarget,
