@@ -33,3 +33,11 @@ export type BackupResponse = {
   remarkPath?: string
   config: AppConfig
 }
+
+export type RestoreResponse = {
+  config: AppConfig
+  restoredPath: string
+  backupFile: string
+  extraBackupPath?: string
+  timestamp: number
+}

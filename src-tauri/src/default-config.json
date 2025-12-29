@@ -1,5 +1,8 @@
 {
-  "settings": {},
+  "settings": {
+    "useRelativeTime": true,
+    "restoreExtraBackup": true
+  },
   "games": [
     {
       "name": "怪物猎人 荒野",

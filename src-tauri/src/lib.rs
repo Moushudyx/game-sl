@@ -17,6 +17,7 @@ pub fn run() {
             commands::get_appdata_root_path,
             commands::backup_game,
             commands::list_backups,
+            commands::restore_backup,
             commands::update_backup_remark,
             commands::get_backup_dir,
             commands::set_setting,

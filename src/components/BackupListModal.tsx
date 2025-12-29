@@ -11,6 +11,7 @@ type Props = {
   items: BackupEntry[]
   onCancel: () => void
   onEdit: (item: BackupEntry) => void
+  onRestore: (item: BackupEntry) => void
   onOpenDir: () => void
   useRelativeTime: boolean
 }
@@ -22,6 +23,7 @@ export default function BackupListModal({
   items,
   onCancel,
   onEdit,
+  onRestore,
   onOpenDir,
   useRelativeTime,
 }: Props) {
@@ -64,7 +66,7 @@ export default function BackupListModal({
                   <Button size="small" key="delete" disabled color="danger">
                     删除
                   </Button>,
-                  <Button size="small" key="restore" disabled type="primary">
+                  <Button size="small" key="restore" type="primary" onClick={() => onRestore(item)}>
                     复原
                   </Button>,
                 ]}

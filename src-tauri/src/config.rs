@@ -26,6 +26,31 @@ pub struct GameEntry {
     pub kind: Option<String>,
 }
 
+/// 确保 settings 中存在默认值；返回是否有改动（需要写回文件）
+fn ensure_settings_defaults(config: &mut AppConfig) -> bool {
+    let mut changed = false;
+
+    if !config.settings.is_object() {
+        config.settings = serde_json::json!({});
+        changed = true;
+    }
+
+    if let Some(map) = config.settings.as_object_mut() {
+        if !map.contains_key("restoreExtraBackup") {
+            map.insert("restoreExtraBackup".to_string(), serde_json::json!(true));
+            changed = true;
+        }
+
+        // 默认启用相对时间，避免旧配置缺省时前端行为不一致
+        if !map.contains_key("useRelativeTime") {
+            map.insert("useRelativeTime".to_string(), serde_json::json!(true));
+            changed = true;
+        }
+    }
+
+    changed
+}
+
 /// 获取当前可读写的工作目录（软件同级目录下的 game-sl）
 pub fn software_workdir() -> Result<PathBuf, String> {
     let exe_path = env::current_exe().map_err(|e| format!("无法获取程序路径: {e}"))?;
@@ -53,7 +78,17 @@ pub fn read_config() -> Result<AppConfig, String> {
     let config_path = ensure_config_file()?;
     let content = fs::read_to_string(&config_path)
         .map_err(|e| format!("读取配置失败: {e}"))?;
-    serde_json::from_str(&content).map_err(|e| format!("解析配置失败: {e}"))
+    let mut config: AppConfig =
+        serde_json::from_str(&content).map_err(|e| format!("解析配置失败: {e}"))?;
+
+    // 自动补全缺省字段，保持旧配置向下兼容
+    let mut changed = ensure_settings_defaults(&mut config);
+
+    if changed {
+        write_config(&config)?;
+    }
+
+    Ok(config)
 }
 
 /// 写回配置文件，保留格式化

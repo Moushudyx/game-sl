@@ -101,7 +101,7 @@ export function GameCard({
 
           <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
             {statusText && (
-              <Tag color="orange" bordered={false}>
+              <Tag color="orange" variant="filled">
                 {statusText}
               </Tag>
             )}

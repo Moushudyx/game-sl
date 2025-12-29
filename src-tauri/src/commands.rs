@@ -68,6 +68,17 @@ pub fn list_backups(game_name: String) -> Result<Vec<backup::BackupEntry>, Strin
     backup::list_backups(game_name)
 }
 
+/// 复原指定备份：可配置是否在复原前额外备份，删除原存档后解压
+#[command]
+pub fn restore_backup(
+    game_name: String,
+    path_template: String,
+    backup_path: String,
+    steam_uid: Option<String>,
+) -> Result<backup::RestoreResponse, String> {
+    backup::restore_backup(game_name, path_template, backup_path, steam_uid)
+}
+
 /// 更新备份备注（空字符串会删除备注文件）
 #[command]
 pub fn update_backup_remark(game_name: String, file_name: String, remark: String) -> Result<(), String> {

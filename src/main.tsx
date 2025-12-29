@@ -16,6 +16,16 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           colorSuccess: '#68c937',
           borderRadius: 4,
         },
+        components: {
+          Modal: {
+            motionDurationSlow: '0.24s',
+            motionDurationMid: '0.12s',
+          },
+          Notification: {
+            motionDurationMid: '0.12s',
+            motionDurationSlow: '0.24s',
+          },
+        },
         algorithm: theme.darkAlgorithm,
       }}
     >

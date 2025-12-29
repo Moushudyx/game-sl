@@ -3,12 +3,13 @@ use crate::paths::resolve_template_path;
 use chrono::{Local, NaiveDateTime, TimeZone};
 use serde::Serialize;
 use std::fs::{self, File};
-use std::io::{Read, Write};
+use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use walkdir::WalkDir;
 use zip::write::FileOptions;
 use zip::{CompressionMethod, ZipWriter};
+use zip::read::ZipArchive;
 
 /// 备份操作返回的结构体
 /// 包含生成的备份文件名与路径、时间戳、备注文件路径（如有）、以及更新后的配置
@@ -35,11 +36,56 @@ pub struct BackupEntry {
     pub time_source: String,
 }
 
+/// 复原操作的返回信息
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RestoreResponse {
+    pub config: config::AppConfig,
+    pub restored_path: String,
+    pub backup_file: String,
+    pub extra_backup_path: Option<String>,
+    pub timestamp: i64,
+}
+
+/// 复原过程的阶段（用于错误定位）
+#[derive(Clone, Copy)]
+enum RestoreStage {
+    Check,
+    ExtraBackup,
+    Delete,
+    Extract,
+    UpdateConfig,
+}
+
+impl RestoreStage {
+    fn as_code(&self) -> &'static str {
+        match self {
+            RestoreStage::Check => "CHECK",
+            RestoreStage::ExtraBackup => "EXTRA_BACKUP",
+            RestoreStage::Delete => "DELETE",
+            RestoreStage::Extract => "EXTRACT",
+            RestoreStage::UpdateConfig => "UPDATE_CONFIG",
+        }
+    }
+}
+
+fn stage_err(stage: RestoreStage, msg: impl Into<String>) -> String {
+    format!("[{}] {}", stage.as_code(), msg.into())
+}
+
 /// 获取/创建备份目录：软件工作目录下的 `backup`
 pub fn backup_dir() -> Result<PathBuf, String> {
     let workdir = config::software_workdir()?;
     let dir = workdir.join("backup");
     fs::create_dir_all(&dir).map_err(|e| format!("创建备份目录失败: {e}"))?;
+    Ok(dir)
+}
+
+/// 额外备份目录：软件工作目录下的 `extra-backup`
+fn extra_backup_dir() -> Result<PathBuf, String> {
+    let workdir = config::software_workdir()?;
+    let dir = workdir.join("extra-backup");
+    fs::create_dir_all(&dir).map_err(|e| format!("创建额外备份目录失败: {e}"))?;
     Ok(dir)
 }
 
@@ -100,6 +146,37 @@ fn zip_directory(src_dir: &Path, dest: &Path) -> Result<(), String> {
     }
 
     zip.finish().map_err(|e| format!("完成压缩失败: {e}"))?;
+    Ok(())
+}
+
+/// 将 zip 文件解压到目标目录（会按需创建子目录）
+fn unzip_directory(zip_path: &Path, dest_dir: &Path) -> Result<(), String> {
+    let file = File::open(zip_path).map_err(|e| format!("读取备份文件失败: {e}"))?;
+    let mut archive = ZipArchive::new(file).map_err(|e| format!("解析 Zip 失败: {e}"))?;
+
+    for i in 0..archive.len() {
+        let mut entry = archive
+            .by_index(i)
+            .map_err(|e| format!("读取压缩条目失败: {e}"))?;
+        let out_path = dest_dir.join(entry.mangled_name());
+
+        if entry.is_dir() {
+            fs::create_dir_all(&out_path)
+                .map_err(|e| format!("创建目录失败: {e}"))?;
+            continue;
+        }
+
+        if let Some(parent) = out_path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|e| format!("创建父目录失败: {e}"))?;
+        }
+
+        let mut outfile = File::create(&out_path)
+            .map_err(|e| format!("写出文件失败: {e}"))?;
+        copy(&mut entry, &mut outfile)
+            .map_err(|e| format!("解压写入失败: {e}"))?;
+    }
+
     Ok(())
 }
 
@@ -250,4 +327,108 @@ pub fn update_backup_remark(
     }
 
     fs::write(&note_path, remark).map_err(|e| format!("写入备注失败: {e}"))
+}
+
+/// 复原备份：可选生成额外备份，移除原存档后解压备份文件
+pub fn restore_backup(
+    game_name: String,
+    path_template: String,
+    backup_path: String,
+    steam_uid: Option<String>,
+) -> Result<RestoreResponse, String> {
+    let backup_file = PathBuf::from(&backup_path);
+    if !backup_file.exists() {
+        return Err(stage_err(RestoreStage::Check, "备份文件不存在"));
+    }
+
+    // 目前仅支持 zip 解压，7z 需要另行实现
+    if let Some(ext) = backup_file.extension().and_then(|s| s.to_str()) {
+        if !ext.eq_ignore_ascii_case("zip") {
+            return Err(stage_err(RestoreStage::Check, "当前仅支持 .zip 备份文件"));
+        }
+    } else {
+        return Err(stage_err(RestoreStage::Check, "无法识别的备份文件扩展名"));
+    }
+
+    let target_path = resolve_template_path(path_template, steam_uid)
+        .map_err(|e| stage_err(RestoreStage::Check, e))?;
+
+    // 读取设置，决定是否额外备份
+    let config_snapshot = config::read_config()
+        .map_err(|e| stage_err(RestoreStage::Check, e))?;
+    let extra_backup_enabled = config_snapshot
+        .settings
+        .get("restoreExtraBackup")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+
+    let mut extra_backup_path: Option<PathBuf> = None;
+
+    // 生成额外备份（仅当配置开启且目标目录存在时执行）
+    if extra_backup_enabled && target_path.exists() {
+        let dir = extra_backup_dir().map_err(|e| stage_err(RestoreStage::ExtraBackup, e))?;
+        let safe_name = sanitize_filename(&game_name);
+        let (ts_tag, _) = now_timestamp();
+        let stem = format!("{safe_name}-ExtraBackup-{ts_tag}");
+        let archive_path = dir.join(format!("{stem}.zip"));
+
+        zip_directory(&target_path, &archive_path)
+            .map_err(|e| stage_err(RestoreStage::ExtraBackup, e))?;
+
+        // 顺便写一份简短的说明，便于用户识别
+        let note_path = archive_path.with_extension("txt");
+        let _ = fs::write(
+            &note_path,
+            "复原前自动生成的额外备份（解压后可恢复到复原前状态）",
+        );
+
+        extra_backup_path = Some(archive_path);
+    }
+
+    // 将原存档移入回收站（避免误删）
+    if target_path.exists() {
+        trash::delete(&target_path).map_err(|e| {
+            stage_err(
+                RestoreStage::Delete,
+                format!("将原存档移入回收站失败: {e}"),
+            )
+        })?;
+    }
+
+    // 确保目标目录存在
+    fs::create_dir_all(&target_path)
+        .map_err(|e| stage_err(RestoreStage::Extract, format!("创建目标目录失败: {e}")))?;
+
+    // 解压备份；失败时尝试用额外备份回滚
+    if let Err(e) = unzip_directory(&backup_file, &target_path) {
+        // 清理可能的半成品
+        let _ = fs::remove_dir_all(&target_path);
+
+        if let Some(extra) = &extra_backup_path {
+            let _ = fs::create_dir_all(&target_path);
+            let _ = unzip_directory(extra, &target_path);
+        }
+
+        return Err(stage_err(RestoreStage::Extract, e));
+    }
+
+    let ts = parse_timestamp_from_name(
+        backup_file
+            .file_name()
+            .and_then(|s| s.to_str())
+            .unwrap_or(""),
+    )
+    .or_else(|| file_modified_millis(&backup_file))
+    .unwrap_or_else(|| chrono::Local::now().timestamp_millis());
+
+    let config = config::update_last_save(&game_name, ts)
+        .map_err(|e| stage_err(RestoreStage::UpdateConfig, e))?;
+
+    Ok(RestoreResponse {
+        config,
+        restored_path: target_path.to_string_lossy().to_string(),
+        backup_file: backup_file.to_string_lossy().to_string(),
+        extra_backup_path: extra_backup_path.map(|p| p.to_string_lossy().to_string()),
+        timestamp: ts,
+    })
 }
