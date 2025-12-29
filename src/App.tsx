@@ -99,10 +99,11 @@ function App() {
   }, [])
 
   useEffect(() => {
-    if (config) {
+    // 仅在本地尚未有路径状态时自动触发一次检测，避免重复扫描
+    if (config && Object.keys(pathState).length === 0) {
       refreshPathState()
     }
-  }, [config, selectedSteamUID])
+  }, [config, selectedSteamUID, pathState])
 
   const renderGameCard = (game: GameEntry) => {
     const state = pathState[game.name]

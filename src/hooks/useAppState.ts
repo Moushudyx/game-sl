@@ -7,7 +7,6 @@ import {
   getSteamUIDList,
   checkSavePath,
   reorderGames,
-  setSetting,
 } from '../services/tauri'
 import { resolveTemplateForDisplay } from '../utils/path'
 
@@ -36,8 +35,6 @@ export interface UseAppStateReturn {
   selectedSteamUID: string | undefined
   setSelectedSteamUID: (uid?: string) => void
   pathState: Record<string, PathState>
-  useRelativeTime: boolean
-  restoreExtraBackup: boolean
   hasSteam: boolean
   // helpers
   /** 将路径模板解析为可展示的绝对/相对路径字符串 */
@@ -52,10 +49,6 @@ export interface UseAppStateReturn {
   moveGameDown: (game: GameEntry) => Promise<void>
   /** 将指定游戏置顶并持久化 */
   pinGameTop: (game: GameEntry) => Promise<void>
-  /** 更新是否使用相对时间显示的偏好并持久化 */
-  updateTimePreference: (checked: boolean) => Promise<void>
-  /** 更新复原前额外备份的偏好并持久化 */
-  updateRestorePreference: (checked: boolean) => Promise<void>
 }
 
 // 集中管理与后端交互的基础状态，减少 App 组件样板与耦合
@@ -70,8 +63,7 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
   const [steamUIDs, setSteamUIDs] = useState<string[]>([])
   const [selectedSteamUID, setSelectedSteamUID] = useState<string | undefined>(undefined)
   const [pathState, setPathState] = useState<Record<string, PathState>>({})
-  const [useRelativeTime, setUseRelativeTime] = useState(true)
-  const [restoreExtraBackup, setRestoreExtraBackup] = useState(true)
+
 
   const hasSteam = useMemo(() => Boolean(steamDir), [steamDir])
 
@@ -100,12 +92,6 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
       setSteamDir(steamPath)
       setSteamUIDs(uidList)
 
-      const pref = (cfg.settings as any)?.useRelativeTime
-      setUseRelativeTime(typeof pref === 'boolean' ? pref : true)
-
-      const restorePref = (cfg.settings as any)?.restoreExtraBackup
-      setRestoreExtraBackup(typeof restorePref === 'boolean' ? restorePref : true)
-
       if (!selectedSteamUID && uidList.length > 0) {
         setSelectedSteamUID(uidList[0])
       }
@@ -119,6 +105,7 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
 
   const refreshPathState = useCallback(async () => {
     if (!config) return
+    if (checkingPaths) return
     setCheckingPaths(true)
     try {
       const resultPairs = await Promise.all(
@@ -136,7 +123,7 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
     } finally {
       setCheckingPaths(false)
     }
-  }, [config, resolveTemplate, selectedSteamUID])
+  }, [config, resolveTemplate, selectedSteamUID, checkingPaths])
 
   const applyOrder = useCallback(
     async (names: string[]) => {
@@ -188,34 +175,6 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
     [applyOrder, config]
   )
 
-  const updateTimePreference = useCallback(
-    async (checked: boolean) => {
-      try {
-        const cfg = await setSetting('useRelativeTime', checked)
-        setConfig(cfg)
-        setUseRelativeTime(checked)
-      } catch (err) {
-        console.error(err)
-        onError?.('保存时间偏好失败', err)
-      }
-    },
-    [onError]
-  )
-
-  const updateRestorePreference = useCallback(
-    async (checked: boolean) => {
-      try {
-        const cfg = await setSetting('restoreExtraBackup', checked)
-        setConfig(cfg)
-        setRestoreExtraBackup(checked)
-      } catch (err) {
-        console.error(err)
-        onError?.('保存复原安全设置失败', err)
-      }
-    },
-    [onError]
-  )
-
   return {
     // state
     loading,
@@ -228,8 +187,6 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
     selectedSteamUID,
     setSelectedSteamUID,
     pathState,
-    useRelativeTime,
-    restoreExtraBackup,
     hasSteam,
     // helpers
     resolveTemplate,
@@ -238,7 +195,5 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
     moveGameUp,
     moveGameDown,
     pinGameTop,
-    updateTimePreference,
-    updateRestorePreference,
   }
 }
