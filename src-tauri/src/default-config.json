@@ -7,43 +7,49 @@
     {
       "name": "怪物猎人 荒野",
       "path": "{Steam}\\userdata\\{SteamUID}\\2246340\\remote",
-      "icon": "",
+      "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/2246340/5500dc058cb0fc0efb39c3919ecdaa49e4847000.ico",
       "type": "steam"
     },
     {
       "name": "怪物猎人 崛起",
       "path": "{Steam}\\userdata\\{SteamUID}\\1446780\\remote",
-      "icon": "",
+      "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/1446780/c98a7974e5edd052ebc9b30b919e7dd7820551ca.ico",
       "type": "steam"
     },
     {
       "name": "怪物猎人 世界",
       "path": "{Steam}\\userdata\\{SteamUID}\\582010\\remote",
-      "icon": "",
+      "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/582010/2ac9a892c6a17fe17867bf7161fb933d72320cda.ico",
+      "type": "steam"
+    },
+    {
+      "name": "黑神话 悟空",
+      "path": "{Steam}\\steamapps\\common\\BlackMythWukong\\b1\\Saved\\SaveGames",
+      "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/2358720/0121f85746c30090f72e2ba7eb5528fdfffa70b6.ico",
       "type": "steam"
     },
     {
       "name": "艾尔登法环",
       "path": "{AppData}\\Roaming\\EldenRing",
-      "icon": "",
+      "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/1245620/2e048bfc2073ca30804ed5b8c454a9ca0e2f98de.ico",
       "type": "userdata"
     },
     {
       "name": "艾尔登法环 黑夜君临",
       "path": "{AppData}\\Roaming\\Nightreign",
-      "icon": "",
+      "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/2622380/b02da776020b00125a508dc3f0bb1470da6e0805.ico",
       "type": "userdata"
     },
     {
       "name": "无人深空",
       "path": "{AppData}\\Roaming\\HelloGames\\NMS",
-      "icon": "",
+      "icon": "https://shared.fastly.steamstatic.com/community_assets/images/apps/275850/46266eaec5fdccb672f5fd8728268bb19d53876d.ico",
       "type": "userdata"
     },
     {
       "name": "无限机兵",
       "path": "{AppData}\\LocalLow\\SenseGames\\AILIMIT",
-      "icon": "",
+      "icon": "https://s41.ax1x.com/2025/12/29/pZtE54O.png",
       "type": "userdata"
     }
   ],
