@@ -43,11 +43,11 @@ export interface UseAppStateReturn {
   refreshBaseInfo: () => Promise<void>
   /** 扫描并更新各游戏的存档路径存在性与解析结果 */
   refreshPathState: () => Promise<void>
-  /** 上移指定游戏的排序位置并持久化 */
+  /** 上移指定游戏的排序位置并保存配置 */
   moveGameUp: (game: GameEntry) => Promise<void>
-  /** 下移指定游戏的排序位置并持久化 */
+  /** 下移指定游戏的排序位置并保存配置 */
   moveGameDown: (game: GameEntry) => Promise<void>
-  /** 将指定游戏置顶并持久化 */
+  /** 将指定游戏置顶并保存配置 */
   pinGameTop: (game: GameEntry) => Promise<void>
 }
 

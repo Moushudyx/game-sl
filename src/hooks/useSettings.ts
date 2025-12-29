@@ -10,14 +10,14 @@ export interface UseSettingsReturn {
   useRelativeTime: boolean
   /** 复原前是否额外备份现有存档 */
   restoreExtraBackup: boolean
-  /** 更新相对时间偏好并持久化 */
+  /** 更新相对时间偏好并保存配置 */
   updateUseRelativeTime: (checked: boolean) => Promise<void>
-  /** 更新复原前额外备份偏好并持久化 */
+  /** 更新复原前额外备份偏好并保存配置 */
   updateRestoreExtraBackup: (checked: boolean) => Promise<void>
 }
 
 /**
- * 使用设置 Hook：从配置中读取/更新用户偏好，并提供持久化操作
+ * 使用设置 Hook：从配置中读取/更新用户偏好，并提供保存配置操作
  * @param onError 错误提示与上报回调
  */
 export function useSettings(onError?: (msg: string, err?: unknown) => void): UseSettingsReturn {
