@@ -1,5 +1,6 @@
 import { Flex, Space, Switch, Typography } from 'antd'
 
+/** 设置页面：提供用户偏好开关 */
 type Props = {
   useRelativeTime: boolean
   restoreExtraBackup: boolean
@@ -9,6 +10,7 @@ type Props = {
 
 const { Text } = Typography
 
+/** 设置页面组件 */
 export default function SettingsPage({
   useRelativeTime,
   restoreExtraBackup,

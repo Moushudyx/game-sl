@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import { Modal, Input, Space, Typography } from 'antd'
 import { GameEntry } from '../types'
 
+/**
+ * 备份创建模态框：为选定游戏创建备份，支持填写备注
+ * 用途：输入备注并触发备份流程，展示源路径信息
+ */
+
 const { Text } = Typography
 
 type Props = {
@@ -12,6 +17,7 @@ type Props = {
   onSubmit: (remark: string) => Promise<void>
 }
 
+/** 备份创建模态框组件 */
 export default function BackupModal({ open, game, resolvedPath, onCancel, onSubmit }: Props) {
   const [remark, setRemark] = useState('')
   const [loading, setLoading] = useState(false)
@@ -41,7 +47,7 @@ export default function BackupModal({ open, game, resolvedPath, onCancel, onSubm
       cancelText="取消"
       centered
     >
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         {/* <Text type="secondary">备注（可选）：</Text> */}
         <Input.TextArea
           rows={4}

@@ -2,6 +2,11 @@ import { Button, Empty, List, Modal, Space, Spin, Tag, Typography } from 'antd'
 import { BackupEntry } from '../types'
 import RelativeTime from './RelativeTime'
 
+/**
+ * 备份列表模态框：用于查看、编辑与管理指定游戏的备份项
+ * 功能：展示备份清单、支持备注编辑、删除与复原操作
+ */
+
 const { Text } = Typography
 
 type Props = {
@@ -18,6 +23,7 @@ type Props = {
   useRelativeTime: boolean
 }
 
+/** 备份列表模态框组件 */
 export default function BackupListModal({
   open,
   gameName,

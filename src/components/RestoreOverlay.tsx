@@ -1,12 +1,17 @@
 import { Alert, Button, Modal, Space, Steps, Typography } from 'antd'
 
+/** 复原流程步骤键 */
 export type RestoreStepKey = 'check' | 'extra' | 'delete' | 'extract' | 'update'
+/** 复原流程步骤状态 */
 export type RestoreStepState = {
   key: RestoreStepKey
   title: string
   status: 'wait' | 'process' | 'finish' | 'error'
 }
 
+/**
+ * 复原流程覆盖层：展示复原进度、提示与关闭动作
+ */
 type Props = {
   open: boolean
   steps: RestoreStepState[]
@@ -20,6 +25,7 @@ type Props = {
 
 const { Text } = Typography
 
+/** 复原流程覆盖层 */
 export default function RestoreOverlay({ open, steps, note, detail, result, gameName, backupName, onClose }: Props) {
   const canClose = result !== null
   const statusType = result === 'error' ? 'error' : 'info'

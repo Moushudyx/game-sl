@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import { Input, Modal } from 'antd'
 import { BackupEntry } from '../types'
 
+/**
+ * 备注编辑模态框：用于修改备份项的备注内容
+ * 功能：编辑并保存备注，留空时代表删除备注文件
+ */
+
 type Props = {
   open: boolean
   item: BackupEntry | null
@@ -9,6 +14,7 @@ type Props = {
   onSave: (newRemark: string) => Promise<void>
 }
 
+/** 备注编辑模态框组件 */
 export default function EditRemarkModal({ open, item, onCancel, onSave }: Props) {
   const [value, setValue] = useState('')
   const [loading, setLoading] = useState(false)

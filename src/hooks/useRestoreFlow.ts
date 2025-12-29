@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { RestoreStepKey, RestoreStepState } from '../components/RestoreOverlay'
 
-type RestoreResult = 'success' | 'error' | null
+/** 复原流程执行结果 */
+export type RestoreResult = 'success' | 'error' | null
 
-type RestoreState = {
+/** 复原流程状态结构 */
+export type RestoreState = {
   open: boolean
   steps: RestoreStepState[]
   result: RestoreResult
@@ -13,8 +15,26 @@ type RestoreState = {
   backupName?: string
 }
 
+/** 返回值类型：统一暴露复原流程的状态与动作 */
+export interface UseRestoreFlowReturn {
+  /** 当前复原流程的状态 */
+  state: RestoreState
+  /** 构造初始步骤数组（全部为等待态） */
+  buildInitialRestoreSteps: () => RestoreStepState[]
+  /** 打开复原面板并设置初始进行态 */
+  openRestoreOverlay: (gameName: string, backupName: string) => void
+  /** 标记复原成功（全部步骤置为完成） */
+  markRestoreSuccess: () => void
+  /** 标记复原失败（根据阶段设置完成/错误） */
+  markRestoreFailure: (stage: RestoreStepKey | null, detail: string) => void
+  /** 当存在结果时允许关闭面板并重置状态 */
+  closeRestoreOverlay: () => void
+  /** 从错误文本中解析阶段代码与详细信息 */
+  parseRestoreError: (text: string) => { stage: RestoreStepKey | null; detail: string }
+}
+
 // 负责复原流程的状态管理与错误解析，避免 App 组件过度膨胀
-export function useRestoreFlow() {
+export function useRestoreFlow(): UseRestoreFlowReturn {
   const restoreStepOrder: RestoreStepKey[] = ['check', 'extra', 'delete', 'extract', 'update']
 
   const buildInitialRestoreSteps = (): RestoreStepState[] => [

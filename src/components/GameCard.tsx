@@ -7,6 +7,9 @@ import { DownOutlined, RiseOutlined, UpOutlined } from '@ant-design/icons'
 
 const { Title, Text } = Typography
 
+/**
+ * 游戏卡片：展示单个游戏的基础信息、路径与操作
+ */
 type Props = {
   game: GameEntry
   pathState?: PathState
@@ -22,6 +25,7 @@ type Props = {
   useRelativeTime: boolean
 }
 
+/** 游戏卡片组件 */
 export function GameCard({
   game,
   pathState,
