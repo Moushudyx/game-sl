@@ -91,6 +91,20 @@ body {
   }
 }
 
+@media (max-width: 1080px) {
+  .app-header {
+    .brand {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 800px) {
+  .app-body {
+    padding: 0 12px 12px;
+  }
+}
+
 .ant-typography,
 .ant-card-extra,
 .ant-select-selector,
