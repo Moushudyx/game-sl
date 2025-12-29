@@ -85,6 +85,12 @@ pub fn update_backup_remark(game_name: String, file_name: String, remark: String
     backup::update_backup_remark(game_name, file_name, remark)
 }
 
+/// 删除备份文件及备注（送回收站）
+#[command]
+pub fn delete_backup(game_name: String, file_name: String) -> Result<(), String> {
+    backup::delete_backup(game_name, file_name)
+}
+
 /// 返回备份目录路径
 #[command]
 pub fn get_backup_dir() -> Result<String, String> {

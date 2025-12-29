@@ -6,6 +6,7 @@ use std::fs::{self, File};
 use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
+use trash;
 use walkdir::WalkDir;
 use zip::write::FileOptions;
 use zip::{CompressionMethod, ZipWriter};
@@ -327,6 +328,33 @@ pub fn update_backup_remark(
     }
 
     fs::write(&note_path, remark).map_err(|e| format!("写入备注失败: {e}"))
+}
+
+/// 删除备份：将压缩包和同名备注（如存在）送回收站
+pub fn delete_backup(game_name: String, file_name: String) -> Result<(), String> {
+    let dir = backup_dir()?;
+    let filename_prefix = format!("{}-Backup", sanitize_filename(&game_name));
+
+    if !file_name.starts_with(&filename_prefix) {
+        return Err("文件名与游戏不匹配".to_string());
+    }
+
+    let archive_path = dir.join(&file_name);
+    if !archive_path.exists() {
+        return Err("未找到对应的备份文件".to_string());
+    }
+
+    // 先删除压缩包
+    trash::delete(&archive_path)
+        .map_err(|e| format!("删除备份失败: {e}"))?;
+
+    // 再尝试删除备注（可选存在）
+    let note_path = archive_path.with_extension("txt");
+    if note_path.exists() {
+        let _ = trash::delete(&note_path);
+    }
+
+    Ok(())
 }
 
 /// 复原备份：可选生成额外备份，移除原存档后解压备份文件

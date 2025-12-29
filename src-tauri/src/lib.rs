@@ -19,6 +19,7 @@ pub fn run() {
             commands::list_backups,
             commands::restore_backup,
             commands::update_backup_remark,
+            commands::delete_backup,
             commands::get_backup_dir,
             commands::set_setting,
             commands::reorder_games

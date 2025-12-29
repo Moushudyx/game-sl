@@ -47,6 +47,7 @@ function App() {
   const [backupListTarget, setBackupListTarget] = useState<GameEntry | null>(null)
   const [editRemarkOpen, setEditRemarkOpen] = useState(false)
   const [editRemarkTarget, setEditRemarkTarget] = useState<BackupEntry | null>(null)
+  const [deletingBackupKey, setDeletingBackupKey] = useState<string | null>(null)
   const [useRelativeTime, setUseRelativeTime] = useState(true)
   const [restoreExtraBackup, setRestoreExtraBackup] = useState(true)
   const [activePage, setActivePage] = useState<'main' | 'settings' | 'about'>('main')
@@ -221,6 +222,37 @@ function App() {
       prev.map((b) => (b.fileName === editRemarkTarget.fileName ? { ...b, remark: newRemark } : b))
     )
     setEditRemarkOpen(false)
+  }
+
+  const performDeleteBackup = async (item: BackupEntry) => {
+    if (!backupListTarget) return
+    setDeletingBackupKey(item.fileName)
+    try {
+      await invoke('delete_backup', {
+        gameName: backupListTarget.name,
+        fileName: item.fileName,
+      })
+      messageApi.success('已删除备份（已送回收站）')
+      setBackupList((prev) => prev.filter((b) => b.fileName !== item.fileName))
+    } catch (err: any) {
+      messageApi.error(err?.toString?.() ?? '删除失败')
+    } finally {
+      setDeletingBackupKey(null)
+    }
+  }
+
+  const handleDeleteBackup = (item: BackupEntry) => {
+    if (!backupListTarget) return
+
+    modal.confirm({
+      title: `删除备份 ${item.fileName} ？`,
+      content: '将移入回收站并同时删除同名备注文件，确认继续？',
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      centered: true,
+      onOk: () => performDeleteBackup(item),
+    })
   }
 
   const performRestore = async (item: BackupEntry) => {
@@ -450,6 +482,8 @@ function App() {
         onEdit={openEditRemark}
         onOpenDir={openBackupFolder}
         onRestore={handleRestore}
+        onDelete={handleDeleteBackup}
+        deletingKey={deletingBackupKey}
         useRelativeTime={useRelativeTime}
       />
 
