@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { ConfigProvider, theme } from 'antd'
+import { App as AntdApp, ConfigProvider, theme } from 'antd'
 import App from './App'
 import 'antd/dist/reset.css'
 
@@ -29,7 +29,10 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
         algorithm: theme.darkAlgorithm,
       }}
     >
-      <App />
+      {/* App 组件内部需要 useApp，所以把 Antd App Provider 放在更外层 */}
+      <AntdApp message={{ maxCount: 1 }}>
+        <App />
+      </AntdApp>
     </ConfigProvider>
   </React.StrictMode>
 )

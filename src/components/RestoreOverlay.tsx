@@ -35,7 +35,8 @@ export default function RestoreOverlay({ open, steps, note, detail, result, game
     <Modal
       open={open}
       title="正在复原备份"
-      width={720}
+      width="100%"
+      style={{ maxWidth: '1200px' }}
       footer={
         canClose ? (
           <Button type="primary" onClick={onClose}>

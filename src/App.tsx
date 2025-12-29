@@ -11,24 +11,26 @@ import {
   Typography,
   message,
   Segmented,
-  Modal,
 } from 'antd'
 import { openPath } from '@tauri-apps/plugin-opener'
 import { GameCard } from './components/GameCard'
 import BackupModal from './components/BackupModal'
 import BackupListModal from './components/BackupListModal'
 import EditRemarkModal from './components/EditRemarkModal'
-import RestoreOverlay, { RestoreStepState, RestoreStepKey } from './components/RestoreOverlay'
+import RestoreOverlay from './components/RestoreOverlay'
 import { AppConfig, BackupEntry, BackupResponse, GameEntry, PathState, RestoreResponse } from './types'
 import './App.scss'
 import MainPage from './pages/MainPage'
 import SettingsPage from './pages/SettingsPage'
 import AboutPage from './pages/AboutPage'
+import { useRestoreFlow } from './hooks/useRestoreFlow'
 
 const { Title, Text } = Typography
 
 function App() {
   const [messageApi, contextHolder] = message.useMessage()
+  // 使用 App.useApp() 提供的 modal，保证跟随主题（夜间模式等）
+  const { modal } = AntApp.useApp()
   const [loading, setLoading] = useState(true)
   const [checkingPaths, setCheckingPaths] = useState(false)
   const [config, setConfig] = useState<AppConfig | null>(null)
@@ -49,111 +51,15 @@ function App() {
   const [restoreExtraBackup, setRestoreExtraBackup] = useState(true)
   const [activePage, setActivePage] = useState<'main' | 'settings' | 'about'>('main')
   const [backendVersion, setBackendVersion] = useState<string | undefined>(undefined)
-  const [restoreState, setRestoreState] = useState<{
-    open: boolean
-    steps: RestoreStepState[]
-    result: 'success' | 'error' | null
-    note: string
-    detail?: string
-    gameName?: string
-    backupName?: string
-  }>({
-    open: false,
-    steps: [],
-    result: null,
-    note: '',
-  })
-
-  const restoreStepOrder: RestoreStepKey[] = ['check', 'extra', 'delete', 'extract', 'update']
-
-  const buildInitialRestoreSteps = (): RestoreStepState[] => [
-    { key: 'check', title: '校验路径与备份文件', status: 'wait' },
-    { key: 'extra', title: '复原前额外备份', status: 'wait' },
-    { key: 'delete', title: '删除现有存档', status: 'wait' },
-    { key: 'extract', title: '解压所选备份', status: 'wait' },
-    { key: 'update', title: '更新记录', status: 'wait' },
-  ]
-
-  const mapStageCode = (code: string): RestoreStepKey | null => {
-    switch (code.toUpperCase()) {
-      case 'CHECK':
-        return 'check'
-      case 'EXTRA_BACKUP':
-        return 'extra'
-      case 'DELETE':
-        return 'delete'
-      case 'EXTRACT':
-        return 'extract'
-      case 'UPDATE_CONFIG':
-        return 'update'
-      default:
-        return null
-    }
-  }
-
-  const parseRestoreError = (text: string): { stage: RestoreStepKey | null; detail: string } => {
-    const raw = text?.toString?.() ?? '复原失败'
-    const msg = raw.replace(/^Error:\s*/, '')
-    const matched = msg.match(/^\[(.+?)\]\s*(.*)$/)
-    if (!matched) return { stage: null, detail: msg }
-    const stage = mapStageCode(matched[1])
-    const detail = matched[2] && matched[2].length > 0 ? matched[2] : msg
-    return { stage, detail }
-  }
-
-  const openRestoreOverlay = (gameName: string, backupName: string) => {
-    const steps = buildInitialRestoreSteps()
-    if (steps[0]) steps[0].status = 'process'
-    setRestoreState({
-      open: true,
-      steps,
-      result: null,
-      note: '正在复原，请不要关闭窗口或重复操作…',
-      gameName,
-      backupName,
-    })
-  }
-
-  const markRestoreSuccess = () => {
-    setRestoreState((prev) => ({
-      ...prev,
-      result: 'success',
-      note: '复原完成，可关闭窗口',
-      steps: buildInitialRestoreSteps().map((s) => ({ ...s, status: 'finish' as const })),
-    }))
-  }
-
-  const markRestoreFailure = (stage: RestoreStepKey | null, detail: string) => {
-    const idx = stage ? restoreStepOrder.indexOf(stage) : -1
-    const steps = buildInitialRestoreSteps().map((s, i) => {
-      if (idx >= 0) {
-        if (i < idx) return { ...s, status: 'finish' as const }
-        if (i === idx) return { ...s, status: 'error' as const }
-      }
-      return s
-    })
-
-    setRestoreState((prev) => ({
-      ...prev,
-      result: 'error',
-      detail,
-      steps,
-      note: '复原失败，请查看提示',
-    }))
-  }
-
-  const closeRestoreOverlay = () => {
-    if (!restoreState.result) return
-    setRestoreState({
-      open: false,
-      steps: buildInitialRestoreSteps(),
-      result: null,
-      note: '',
-      detail: '',
-      gameName: '',
-      backupName: '',
-    })
-  }
+  const {
+    state: restoreState,
+    buildInitialRestoreSteps,
+    openRestoreOverlay,
+    markRestoreSuccess,
+    markRestoreFailure,
+    closeRestoreOverlay,
+    parseRestoreError,
+  } = useRestoreFlow()
 
   const hasSteam = useMemo(() => Boolean(steamDir), [steamDir])
 
@@ -345,7 +251,8 @@ function App() {
   const handleRestore = (item: BackupEntry) => {
     if (!backupListTarget) return
 
-    Modal.confirm({
+    // 使用上下文 modal 以继承当前主题（夜间模式等）
+    modal.confirm({
       title: `确认复原 ${backupListTarget.name} ？`,
       content: '复原会删除当前存档并解压所选备份，建议确保备份可靠。',
       okText: '开始复原',
@@ -464,7 +371,7 @@ function App() {
   }
 
   return (
-    <AntApp message={{ maxCount: 1 }}>
+    <>
       {contextHolder}
       <Layout className="app-shell">
         <Layout.Header className="app-header">
@@ -563,7 +470,7 @@ function App() {
         backupName={restoreState.backupName}
         onClose={closeRestoreOverlay}
       />
-    </AntApp>
+    </>
   )
 }
 
