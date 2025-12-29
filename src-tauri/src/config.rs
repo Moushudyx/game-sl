@@ -82,7 +82,7 @@ pub fn read_config() -> Result<AppConfig, String> {
         serde_json::from_str(&content).map_err(|e| format!("解析配置失败: {e}"))?;
 
     // 自动补全缺省字段，保持旧配置向下兼容
-    let mut changed = ensure_settings_defaults(&mut config);
+    let changed = ensure_settings_defaults(&mut config);
 
     if changed {
         write_config(&config)?;
