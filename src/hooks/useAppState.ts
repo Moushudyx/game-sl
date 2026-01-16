@@ -42,7 +42,7 @@ export interface UseAppStateReturn {
   /** 刷新基础信息（配置、用户目录、Steam 安装目录与 UID 列表） */
   refreshBaseInfo: () => Promise<void>
   /** 扫描并更新各游戏的存档路径存在性与解析结果 */
-  refreshPathState: () => Promise<void>
+  refreshPathState: (configOverride?: AppConfig | null) => Promise<void>
   /** 上移指定游戏的排序位置并保存配置 */
   moveGameUp: (game: GameEntry) => Promise<void>
   /** 下移指定游戏的排序位置并保存配置 */
@@ -63,7 +63,6 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
   const [steamUIDs, setSteamUIDs] = useState<string[]>([])
   const [selectedSteamUID, setSelectedSteamUID] = useState<string | undefined>(undefined)
   const [pathState, setPathState] = useState<Record<string, PathState>>({})
-
 
   const hasSteam = useMemo(() => Boolean(steamDir), [steamDir])
 
@@ -103,27 +102,31 @@ export function useAppState(options?: UseAppStateOptions): UseAppStateReturn {
     }
   }, [onError, selectedSteamUID])
 
-  const refreshPathState = useCallback(async () => {
-    if (!config) return
-    if (checkingPaths) return
-    setCheckingPaths(true)
-    try {
-      const resultPairs = await Promise.all(
-        config.games.map(async (game) => {
-          let exists = false
-          try {
-            exists = await checkSavePath(game.path, selectedSteamUID ?? null)
-          } catch (err) {
-            console.error(err)
-          }
-          return [game.name, { exists, resolved: resolveTemplate(game.path) } as PathState]
-        })
-      )
-      setPathState(Object.fromEntries(resultPairs))
-    } finally {
-      setCheckingPaths(false)
-    }
-  }, [config, resolveTemplate, selectedSteamUID, checkingPaths])
+  const refreshPathState = useCallback(
+    async (configOverride?: AppConfig | null) => {
+      const effectiveConfig = configOverride ?? config
+      if (!effectiveConfig) return
+      if (checkingPaths) return
+      setCheckingPaths(true)
+      try {
+        const resultPairs = await Promise.all(
+          effectiveConfig.games.map(async (game) => {
+            let exists = false
+            try {
+              exists = await checkSavePath(game.path, selectedSteamUID ?? null)
+            } catch (err) {
+              console.error(err)
+            }
+            return [game.name, { exists, resolved: resolveTemplate(game.path) } as PathState]
+          })
+        )
+        setPathState(Object.fromEntries(resultPairs))
+      } finally {
+        setCheckingPaths(false)
+      }
+    },
+    [config, resolveTemplate, selectedSteamUID, checkingPaths]
+  )
 
   const applyOrder = useCallback(
     async (names: string[]) => {

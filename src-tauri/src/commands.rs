@@ -1,6 +1,12 @@
 use crate::backup;
-use crate::config::{read_config, reorder_games as reorder_games_impl, update_setting};
-use crate::paths::{get_appdata_root, get_steam_install_dir_internal, get_user_home, list_steam_uid, resolve_template_path};
+use crate::config::{
+    read_config, reorder_games as reorder_games_impl, update_setting,
+    upsert_game as upsert_game_impl,
+};
+use crate::paths::{
+    get_appdata_root, get_steam_install_dir_internal, get_user_home, list_steam_uid,
+    resolve_template_path,
+};
 use tauri::command;
 
 /// 读取配置
@@ -81,7 +87,11 @@ pub fn restore_backup(
 
 /// 更新备份备注（空字符串会删除备注文件）
 #[command]
-pub fn update_backup_remark(game_name: String, file_name: String, remark: String) -> Result<(), String> {
+pub fn update_backup_remark(
+    game_name: String,
+    file_name: String,
+    remark: String,
+) -> Result<(), String> {
     backup::update_backup_remark(game_name, file_name, remark)
 }
 
@@ -99,7 +109,10 @@ pub fn get_backup_dir() -> Result<String, String> {
 
 /// 更新 settings 中的单个键值
 #[command]
-pub fn set_setting(key: String, value: serde_json::Value) -> Result<crate::config::AppConfig, String> {
+pub fn set_setting(
+    key: String,
+    value: serde_json::Value,
+) -> Result<crate::config::AppConfig, String> {
     update_setting(key, value)
 }
 
@@ -107,4 +120,13 @@ pub fn set_setting(key: String, value: serde_json::Value) -> Result<crate::confi
 #[command]
 pub fn reorder_games(order: Vec<String>) -> Result<crate::config::AppConfig, String> {
     reorder_games_impl(order)
+}
+
+/// 新增或更新游戏配置（传入原名表示用于编辑场景）
+#[command]
+pub fn upsert_game(
+    game: crate::config::GameEntry,
+    original_name: Option<String>,
+) -> Result<crate::config::AppConfig, String> {
+    upsert_game_impl(game, original_name)
 }

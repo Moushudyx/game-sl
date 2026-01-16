@@ -1,3 +1,4 @@
+import { PlusOutlined, ReloadOutlined } from '@ant-design/icons'
 import { Button, Divider, Flex, Layout, Segmented, Select, Space, Typography } from 'antd'
 
 const { Title, Text } = Typography
@@ -12,9 +13,10 @@ export type HeaderBarProps = {
   steamUIDs: string[]
   selectedSteamUID?: string
   onSelectSteamUID: (uid?: string) => void
-  onReload: () => void
-  onRefreshPaths: () => void
+  onReload: () => Promise<void>
+  onRefreshPaths: () => Promise<void>
   refreshingPaths: boolean
+  onAddGame?: () => void
 }
 
 /** 顶部导航栏 */
@@ -28,6 +30,7 @@ export function HeaderBar({
   onReload,
   onRefreshPaths,
   refreshingPaths,
+  onAddGame,
 }: HeaderBarProps) {
   return (
     <Layout.Header className="app-header">
@@ -60,10 +63,26 @@ export function HeaderBar({
               options={steamUIDs.map((id) => ({ label: id, value: id }))}
             />
           </div>
-          <Button onClick={onReload}>重新加载</Button>
+          {onAddGame && (
+            <Button color="primary" variant="text" icon={<PlusOutlined />} onClick={onAddGame}>
+              {/* 新增游戏 */}
+            </Button>
+          )}
+          <Button
+            color="primary"
+            variant="text"
+            icon={<ReloadOutlined />}
+            onClick={async () => {
+              await onReload()
+              await onRefreshPaths()
+            }}
+          >
+            {/* 重新加载 */}
+          </Button>
+          {/* <Button onClick={onReload}>重新加载</Button>
           <Button type="primary" onClick={onRefreshPaths} loading={refreshingPaths}>
             重新检测路径
-          </Button>
+          </Button> */}
         </Space>
       </Flex>
     </Layout.Header>

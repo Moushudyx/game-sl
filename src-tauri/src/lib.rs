@@ -22,7 +22,8 @@ pub fn run() {
             commands::delete_backup,
             commands::get_backup_dir,
             commands::set_setting,
-            commands::reorder_games
+            commands::reorder_games,
+            commands::upsert_game
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -100,6 +100,71 @@ pub fn write_config(config: &AppConfig) -> Result<(), String> {
         .map_err(|e| format!("写入配置失败: {e}"))
 }
 
+/// 新增或更新游戏配置（通过 original_name 匹配旧项；若为空则按 name 匹配）
+pub fn upsert_game(game: GameEntry, original_name: Option<String>) -> Result<AppConfig, String> {
+    let mut config = read_config()?;
+
+    let target_name = original_name
+        .as_ref()
+        .map(|s| s.trim().to_string())
+        .unwrap_or_else(|| game.name.clone());
+
+    // 记录原排序位置
+    let mut existing_index: Option<usize> = None;
+    let mut existing_entry: Option<GameEntry> = None;
+
+    for (idx, g) in config.games.iter().enumerate() {
+        if g.name == target_name || g.name == game.name {
+            existing_index = Some(idx);
+            existing_entry = Some(g.clone());
+            break;
+        }
+    }
+
+    // 检查同名冲突
+    if config
+        .games
+        .iter()
+        .any(|g| g.name == game.name && g.name != target_name)
+    {
+        return Err("已存在同名游戏，请更换名称".to_string());
+    }
+
+    // 保留 last_save
+    let mut new_game = game;
+    if new_game.last_save.is_none() {
+        if let Some(old) = existing_entry.as_ref() {
+            new_game.last_save = old.last_save;
+        }
+    }
+
+    let insert_index = existing_index.unwrap_or(config.games.len());
+    let mut new_games: Vec<GameEntry> = Vec::with_capacity(config.games.len().max(1));
+    let mut inserted = false;
+
+    for (idx, g) in config.games.into_iter().enumerate() {
+        if idx == insert_index {
+            new_games.push(new_game.clone());
+            inserted = true;
+        }
+
+        // 若名称与目标或新名称匹配，则跳过旧条目，避免重复
+        if g.name == target_name || g.name == new_game.name {
+            continue;
+        }
+
+        new_games.push(g);
+    }
+
+    if !inserted {
+        new_games.push(new_game); // 加到最后面
+    }
+
+    config.games = new_games;
+    write_config(&config)?;
+    Ok(config)
+}
+
 /// 更新指定游戏的 last_save 并落盘，返回最新配置
 pub fn update_last_save(game_name: &str, timestamp: i64) -> Result<AppConfig, String> {
     let mut config = read_config()?;

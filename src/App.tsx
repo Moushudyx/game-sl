@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { App as AntApp, Layout, message } from 'antd'
 import { openPath } from '@tauri-apps/plugin-opener'
 import { GameCard } from './components/GameCard'
@@ -17,6 +17,8 @@ import HeaderBar from './components/HeaderBar'
 import BackupFeature from './features/backups/BackupFeature'
 import { useBackups } from './features/backups/useBackups'
 import { useAppVersion } from './hooks/useAppVersion'
+import GameEditorModal, { GameFormValues } from './components/GameEditorModal'
+import { upsertGame } from './services/tauri'
 
 function App() {
   const [messageApi, contextHolder] = message.useMessage()
@@ -33,7 +35,7 @@ function App() {
     parseRestoreError,
   } = useRestoreFlow()
 
-  const onError = useCallback((msg:string) => messageApi.error(msg), [messageApi])
+  const onError = useCallback((msg: string) => messageApi.error(msg), [messageApi])
 
   const {
     loading,
@@ -53,12 +55,7 @@ function App() {
     pinGameTop,
   } = useAppState({ onError })
 
-  const {
-    useRelativeTime,
-    restoreExtraBackup,
-    updateUseRelativeTime,
-    updateRestoreExtraBackup,
-  } = useSettings(onError)
+  const { useRelativeTime, restoreExtraBackup, updateUseRelativeTime, updateRestoreExtraBackup } = useSettings(onError)
   const {
     backupModalOpen,
     backupTarget,
@@ -94,7 +91,9 @@ function App() {
   })
   const [activePage, setActivePage] = useState<'main' | 'settings' | 'about'>('main')
   const { backendVersion } = useAppVersion()
-
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create')
+  const [editingGame, setEditingGame] = useState<GameEntry | null>(null)
 
   useEffect(() => {
     refreshBaseInfo()
@@ -106,6 +105,53 @@ function App() {
       refreshPathState()
     }
   }, [config, selectedSteamUID, pathState])
+
+  const existingNames = useMemo(() => config?.games.map((g) => g.name) ?? [], [config])
+
+  const inferGameType = (path: string): 'steam' | 'userdata' => {
+    const lower = path.toLowerCase()
+    return lower.includes('{steam}') || lower.includes('{steamuid}') ? 'steam' : 'userdata'
+  }
+
+  const openCreateGame = () => {
+    setEditorMode('create')
+    setEditingGame(null)
+    setEditorOpen(true)
+  }
+
+  const openEditGame = (game: GameEntry) => {
+    setEditorMode('edit')
+    setEditingGame(game)
+    setEditorOpen(true)
+  }
+
+  const closeEditor = () => setEditorOpen(false)
+
+  const handleSaveGame = async (values: GameFormValues, originalName?: string | null) => {
+    const name = values.name.trim()
+    const path = values.path.trim()
+    const icon = values.icon.trim()
+    const original = originalName?.trim() || editingGame?.name || null
+    try {
+      const cfg = await upsertGame(
+        {
+          name,
+          path,
+          icon,
+          type: inferGameType(path),
+        },
+        editorMode === 'edit' ? original : null
+      )
+      setConfig(cfg)
+      messageApi.success(editorMode === 'create' ? '已新增游戏' : '已保存游戏')
+      setEditorOpen(false)
+      await refreshPathState(cfg)
+    } catch (err: any) {
+      console.error(err)
+      const msg = err?.toString?.() ?? '保存游戏配置失败'
+      messageApi.error(msg)
+    }
+  }
 
   const renderGameCard = (game: GameEntry) => {
     const state = pathState[game.name]
@@ -136,14 +182,11 @@ function App() {
           onMoveDown={moveGameDown}
           onPinTop={pinGameTop}
           useRelativeTime={useRelativeTime}
+          onEdit={openEditGame}
         />
       </div>
     )
   }
-
-
-
-
 
   return (
     <>
@@ -159,6 +202,7 @@ function App() {
           onReload={refreshBaseInfo}
           onRefreshPaths={refreshPathState}
           refreshingPaths={checkingPaths}
+          onAddGame={activePage === 'main' ? openCreateGame : undefined}
         />
         <Layout.Content className="app-body">
           <div className="page-holder">
@@ -214,6 +258,16 @@ function App() {
         gameName={restoreState.gameName}
         backupName={restoreState.backupName}
         onClose={closeRestoreOverlay}
+      />
+
+      <GameEditorModal
+        open={editorOpen}
+        mode={editorMode}
+        initialValue={editingGame}
+        existingNames={existingNames}
+        resolveTemplate={resolveTemplate}
+        onCancel={closeEditor}
+        onSubmit={handleSaveGame}
       />
     </>
   )

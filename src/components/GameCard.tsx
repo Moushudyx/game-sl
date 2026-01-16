@@ -3,7 +3,7 @@ import { GameEntry, PathState } from '../types'
 import './GameCard.scss'
 import RelativeTime from './RelativeTime'
 import defaultIcon from '../assets/default-game-icon.svg'
-import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, StarOutlined } from '@ant-design/icons'
+import { ArrowDownOutlined, ArrowUpOutlined, DeleteOutlined, EditOutlined, StarOutlined } from '@ant-design/icons'
 
 const { Title, Text } = Typography
 
@@ -23,6 +23,10 @@ type Props = {
   onMoveDown: (game: GameEntry) => void
   onPinTop: (game: GameEntry) => void
   useRelativeTime: boolean
+  onEdit?: (game: GameEntry) => void
+  onDelete?: (game: GameEntry) => void
+  showHeaderActions?: boolean
+  showActionButtons?: boolean
 }
 
 /** 游戏卡片组件 */
@@ -39,6 +43,10 @@ export function GameCard({
   onMoveDown,
   onPinTop,
   useRelativeTime,
+  onEdit,
+  onDelete,
+  showHeaderActions = true,
+  showActionButtons = true,
 }: Props) {
   const resolveIconSrc = (icon?: string) => {
     if (!icon || icon.trim().length === 0) return defaultIcon
@@ -66,41 +74,43 @@ export function GameCard({
                 mode={useRelativeTime ? 'relative' : 'absolute'}
               />
             </Flex>
-            <div className="card-actions">
-              <Button
-                color="default"
-                variant="text"
-                size="small"
-                icon={<ArrowUpOutlined />}
-                title="前移"
-                disabled={checkingPaths}
-                onClick={() => onMoveUp(game)}
-              >
-                {/* 前移 */}
-              </Button>
-              <Button
-                color="default"
-                variant="text"
-                size="small"
-                icon={<ArrowDownOutlined />}
-                title="后移"
-                disabled={checkingPaths}
-                onClick={() => onMoveDown(game)}
-              >
-                {/* 后移 */}
-              </Button>
-              <Button
-                color="default"
-                variant="text"
-                size="small"
-                icon={<StarOutlined />}
-                title="置顶"
-                disabled={checkingPaths}
-                onClick={() => onPinTop(game)}
-              >
-                {/* 置顶 */}
-              </Button>
-            </div>
+            {showHeaderActions && (
+              <div className="card-actions">
+                <Button
+                  color="default"
+                  variant="text"
+                  size="small"
+                  icon={<ArrowUpOutlined />}
+                  title="前移"
+                  disabled={checkingPaths}
+                  onClick={() => onMoveUp(game)}
+                >
+                  {/* 前移 */}
+                </Button>
+                <Button
+                  color="default"
+                  variant="text"
+                  size="small"
+                  icon={<ArrowDownOutlined />}
+                  title="后移"
+                  disabled={checkingPaths}
+                  onClick={() => onMoveDown(game)}
+                >
+                  {/* 后移 */}
+                </Button>
+                <Button
+                  color="default"
+                  variant="text"
+                  size="small"
+                  icon={<StarOutlined />}
+                  title="置顶"
+                  disabled={checkingPaths}
+                  onClick={() => onPinTop(game)}
+                >
+                  {/* 置顶 */}
+                </Button>
+              </div>
+            )}
           </div>
 
           <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
@@ -112,17 +122,32 @@ export function GameCard({
             <Text className="path-text" title={pathState?.resolved || resolvedPath}>
               {pathState?.resolved || resolvedPath}
             </Text>
-            <Space size="small">
-              <Button type="primary" disabled={disabled || checkingPaths} ghost onClick={() => onBackup(game)}>
-                备份
-              </Button>
-              <Button disabled={disabled || checkingPaths} onClick={() => onViewBackups(game)}>
-                查看备份
-              </Button>
-              <Button disabled={checkingPaths} icon={<DeleteOutlined />} danger type="text">
-                {/* 删除游戏 */}
-              </Button>
-            </Space>
+            {showActionButtons && (
+              <Space size="small">
+                <Button type="primary" disabled={disabled || checkingPaths} ghost onClick={() => onBackup(game)}>
+                  备份
+                </Button>
+                <Button disabled={disabled || checkingPaths} onClick={() => onViewBackups(game)}>
+                  查看备份
+                </Button>
+                {onEdit && (
+                  <Button disabled={checkingPaths} icon={<EditOutlined />} type="text" onClick={() => onEdit(game)}>
+                    {/* 编辑 */}
+                  </Button>
+                )}
+                {onDelete && (
+                  <Button
+                    disabled={checkingPaths}
+                    icon={<DeleteOutlined />}
+                    danger
+                    type="text"
+                    onClick={() => onDelete(game)}
+                  >
+                    {/* 删除游戏 */}
+                  </Button>
+                )}
+              </Space>
+            )}
           </Space>
         </div>
       </div>

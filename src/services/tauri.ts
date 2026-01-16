@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import { AppConfig, BackupEntry, BackupResponse, RestoreResponse } from '../types'
+import { AppConfig, BackupEntry, BackupResponse, GameEntry, RestoreResponse } from '../types'
 
 export async function loadConfig(): Promise<AppConfig> {
   return invoke<AppConfig>('load_config')
@@ -72,4 +72,8 @@ export async function setSetting(key: string, value: unknown): Promise<AppConfig
 
 export async function reorderGames(order: string[]): Promise<AppConfig> {
   return invoke<AppConfig>('reorder_games', { order })
+}
+
+export async function upsertGame(game: GameEntry, originalName?: string | null): Promise<AppConfig> {
+  return invoke<AppConfig>('upsert_game', { game, originalName: originalName ?? null })
 }

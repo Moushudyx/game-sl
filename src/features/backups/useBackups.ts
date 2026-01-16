@@ -29,7 +29,7 @@ export interface UseBackupsDeps {
   /** 将路径模板解析为字符串，供 UI 展示 */
   resolveTemplate: (template: string) => string
   /** 复原完成后刷新路径状态（建议返回 Promise 以便等待） */
-  refreshPathState: () => Promise<void>
+  refreshPathState: (configOverride?: AppConfig | null) => Promise<void>
   /** 消息提示接口（成功/错误） */
   messageApi: MessageApiLike
   /** Modal 确认弹窗（兼容 antd 的 Modal.confirm） */
