@@ -1,6 +1,6 @@
 use crate::backup;
 use crate::config::{
-    read_config, reorder_games as reorder_games_impl, update_setting,
+    read_config, remove_game as remove_game_impl, reorder_games as reorder_games_impl, update_setting,
     upsert_game as upsert_game_impl,
 };
 use crate::paths::{
@@ -129,4 +129,11 @@ pub fn upsert_game(
     original_name: Option<String>,
 ) -> Result<crate::config::AppConfig, String> {
     upsert_game_impl(game, original_name)
+}
+
+/// 删除游戏配置并联动清理该游戏全部备份文件
+#[command]
+pub fn delete_game(game_name: String) -> Result<crate::config::AppConfig, String> {
+    let _ = backup::delete_all_backups_for_game(game_name.clone())?;
+    remove_game_impl(game_name)
 }

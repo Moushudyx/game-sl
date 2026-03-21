@@ -357,6 +357,41 @@ pub fn delete_backup(game_name: String, file_name: String) -> Result<(), String>
     Ok(())
 }
 
+/// 删除某个游戏的全部备份相关文件（.zip/.7z/.txt），返回删除文件数量
+pub fn delete_all_backups_for_game(game_name: String) -> Result<usize, String> {
+    let dir = backup_dir()?;
+    let filename_prefix = format!("{}-Backup", sanitize_filename(&game_name));
+    let entries = match fs::read_dir(&dir) {
+        Ok(e) => e,
+        Err(_) => return Ok(0),
+    };
+
+    let mut deleted_count = 0usize;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+
+        let Some(file_name) = path.file_name().and_then(|s| s.to_str()) else {
+            continue;
+        };
+
+        if !file_name.starts_with(&filename_prefix) {
+            continue;
+        }
+
+        if !(file_name.ends_with(".zip") || file_name.ends_with(".7z") || file_name.ends_with(".txt")) {
+            continue;
+        }
+
+        trash::delete(&path).map_err(|e| format!("删除备份文件失败: {e}"))?;
+        deleted_count += 1;
+    }
+
+    Ok(deleted_count)
+}
+
 /// 复原备份：可选生成额外备份，移除原存档后解压备份文件
 pub fn restore_backup(
     game_name: String,

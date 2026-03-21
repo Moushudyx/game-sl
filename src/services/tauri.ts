@@ -77,3 +77,7 @@ export async function reorderGames(order: string[]): Promise<AppConfig> {
 export async function upsertGame(game: GameEntry, originalName?: string | null): Promise<AppConfig> {
   return invoke<AppConfig>('upsert_game', { game, originalName: originalName ?? null })
 }
+
+export async function deleteGame(gameName: string): Promise<AppConfig> {
+  return invoke<AppConfig>('delete_game', { gameName })
+}

@@ -165,6 +165,20 @@ pub fn upsert_game(game: GameEntry, original_name: Option<String>) -> Result<App
     Ok(config)
 }
 
+/// 删除指定游戏配置并落盘，返回最新配置
+pub fn remove_game(game_name: String) -> Result<AppConfig, String> {
+    let mut config = read_config()?;
+    let original_len = config.games.len();
+    config.games.retain(|g| g.name != game_name);
+
+    if config.games.len() == original_len {
+        return Err("未找到对应的游戏配置".to_string());
+    }
+
+    write_config(&config)?;
+    Ok(config)
+}
+
 /// 更新指定游戏的 last_save 并落盘，返回最新配置
 pub fn update_last_save(game_name: &str, timestamp: i64) -> Result<AppConfig, String> {
     let mut config = read_config()?;

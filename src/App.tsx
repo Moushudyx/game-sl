@@ -18,7 +18,7 @@ import BackupFeature from './features/backups/BackupFeature'
 import { useBackups } from './features/backups/useBackups'
 import { useAppVersion } from './hooks/useAppVersion'
 import GameEditorModal, { GameFormValues } from './components/GameEditorModal'
-import { upsertGame } from './services/tauri'
+import { deleteGame, upsertGame } from './services/tauri'
 
 function App() {
   const [messageApi, contextHolder] = message.useMessage()
@@ -94,6 +94,7 @@ function App() {
   const [editorOpen, setEditorOpen] = useState(false)
   const [editorMode, setEditorMode] = useState<'create' | 'edit'>('create')
   const [editingGame, setEditingGame] = useState<GameEntry | null>(null)
+  const [pendingDelete, setPendingDelete] = useState<{ name: string; at: number } | null>(null)
 
   useEffect(() => {
     refreshBaseInfo()
@@ -126,6 +127,39 @@ function App() {
   }
 
   const closeEditor = () => setEditorOpen(false)
+
+  const handleDeleteGame = (game: GameEntry) => {
+    const now = Date.now()
+    const isSecondClick = pendingDelete && pendingDelete.name === game.name && now - pendingDelete.at <= 1500
+
+    if (!isSecondClick) {
+      setPendingDelete({ name: game.name, at: now })
+      messageApi.warning(`请在 1.5 秒内再次点击“删除”以确认删除 ${game.name}`)
+      return
+    }
+
+    setPendingDelete(null)
+    modal.confirm({
+      title: `确认删除游戏 ${game.name}？`,
+      content: '将删除该游戏配置，并删除该游戏的全部备份及备注文件（送入回收站）。',
+      okText: '删除',
+      okButtonProps: { danger: true },
+      cancelText: '取消',
+      centered: true,
+      onOk: async () => {
+        try {
+          const cfg = await deleteGame(game.name)
+          setConfig(cfg)
+          messageApi.success('已删除游戏及其备份文件')
+          await refreshPathState(cfg)
+        } catch (err: any) {
+          console.error(err)
+          const msg = err?.toString?.() ?? '删除游戏失败'
+          messageApi.error(msg)
+        }
+      },
+    })
+  }
 
   const handleSaveGame = async (values: GameFormValues, originalName?: string | null) => {
     const name = values.name.trim()
@@ -183,6 +217,7 @@ function App() {
           onPinTop={pinGameTop}
           useRelativeTime={useRelativeTime}
           onEdit={openEditGame}
+          onDelete={handleDeleteGame}
         />
       </div>
     )
