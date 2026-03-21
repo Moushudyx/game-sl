@@ -392,6 +392,65 @@ pub fn delete_all_backups_for_game(game_name: String) -> Result<usize, String> {
     Ok(deleted_count)
 }
 
+/// 将某个游戏已有备份文件批量改名为新游戏名（含同名备注 .txt）
+/// 返回成功改名的文件数量
+pub fn rename_backups_for_game(old_game_name: String, new_game_name: String) -> Result<usize, String> {
+    let dir = backup_dir()?;
+    let old_prefix = format!("{}-Backup", sanitize_filename(&old_game_name));
+    let new_prefix = format!("{}-Backup", sanitize_filename(&new_game_name));
+
+    if old_prefix == new_prefix {
+        return Ok(0);
+    }
+
+    let entries = match fs::read_dir(&dir) {
+        Ok(e) => e,
+        Err(_) => return Ok(0),
+    };
+
+    let mut plans: Vec<(PathBuf, PathBuf)> = Vec::new();
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_file() {
+            continue;
+        }
+
+        let Some(file_name) = path.file_name().and_then(|s| s.to_str()) else {
+            continue;
+        };
+
+        if !file_name.starts_with(&old_prefix) {
+            continue;
+        }
+
+        if !(file_name.ends_with(".zip") || file_name.ends_with(".7z") || file_name.ends_with(".txt")) {
+            continue;
+        }
+
+        let suffix = &file_name[old_prefix.len()..];
+        let new_file_name = format!("{new_prefix}{suffix}");
+        let target_path = dir.join(new_file_name);
+
+        if target_path.exists() {
+            return Err(format!("重命名失败，目标文件已存在: {}", target_path.to_string_lossy()));
+        }
+
+        plans.push((path, target_path));
+    }
+
+    for (from, to) in &plans {
+        fs::rename(from, to).map_err(|e| {
+            format!(
+                "重命名备份文件失败: {} -> {}: {e}",
+                from.to_string_lossy(),
+                to.to_string_lossy()
+            )
+        })?;
+    }
+
+    Ok(plans.len())
+}
+
 /// 复原备份：可选生成额外备份，移除原存档后解压备份文件
 pub fn restore_backup(
     game_name: String,

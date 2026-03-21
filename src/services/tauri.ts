@@ -81,3 +81,7 @@ export async function upsertGame(game: GameEntry, originalName?: string | null):
 export async function deleteGame(gameName: string): Promise<AppConfig> {
   return invoke<AppConfig>('delete_game', { gameName })
 }
+
+export async function renameBackupsForGame(oldGameName: string, newGameName: string): Promise<number> {
+  return invoke<number>('rename_backups_for_game', { oldGameName, newGameName })
+}

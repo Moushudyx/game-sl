@@ -18,7 +18,7 @@ import BackupFeature from './features/backups/BackupFeature'
 import { useBackups } from './features/backups/useBackups'
 import { useAppVersion } from './hooks/useAppVersion'
 import GameEditorModal, { GameFormValues } from './components/GameEditorModal'
-import { deleteGame, upsertGame } from './services/tauri'
+import { deleteGame, listBackups, renameBackupsForGame, upsertGame } from './services/tauri'
 
 function App() {
   const [messageApi, contextHolder] = message.useMessage()
@@ -166,7 +166,34 @@ function App() {
     const path = values.path.trim()
     const icon = values.icon.trim()
     const original = originalName?.trim() || editingGame?.name || null
+    const isRenameInEdit = editorMode === 'edit' && !!original && original !== name
+
+    const confirmRenameBackups = async (oldName: string, newName: string, backupCount: number) => {
+      return new Promise<boolean>((resolve) => {
+        modal.confirm({
+          title: '确认同步重命名备份文件？',
+          content: `检测到游戏名称从“${oldName}”改为“${newName}”。将同步重命名 ${backupCount} 个已有备份文件及同名备注。`,
+          okText: '确认并继续',
+          cancelText: '取消',
+          centered: true,
+          onOk: () => resolve(true),
+          onCancel: () => resolve(false),
+        })
+      })
+    }
+
+    let renamedBackups = false
     try {
+      if (isRenameInEdit && original) {
+        const oldBackups = await listBackups(original)
+        if (oldBackups.length > 0) {
+          const ok = await confirmRenameBackups(original, name, oldBackups.length)
+          if (!ok) return
+          await renameBackupsForGame(original, name)
+          renamedBackups = true
+        }
+      }
+
       const cfg = await upsertGame(
         {
           name,
@@ -181,6 +208,14 @@ function App() {
       setEditorOpen(false)
       await refreshPathState(cfg)
     } catch (err: any) {
+      if (renamedBackups && isRenameInEdit && original) {
+        try {
+          await renameBackupsForGame(name, original)
+        } catch (rollbackErr) {
+          console.error(rollbackErr)
+          messageApi.warning('保存失败且备份文件名回滚失败，请手动检查备份目录')
+        }
+      }
       console.error(err)
       const msg = err?.toString?.() ?? '保存游戏配置失败'
       messageApi.error(msg)

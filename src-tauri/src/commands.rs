@@ -137,3 +137,9 @@ pub fn delete_game(game_name: String) -> Result<crate::config::AppConfig, String
     let _ = backup::delete_all_backups_for_game(game_name.clone())?;
     remove_game_impl(game_name)
 }
+
+/// 按游戏名批量重命名历史备份文件（含同名备注）
+#[command]
+pub fn rename_backups_for_game(old_game_name: String, new_game_name: String) -> Result<usize, String> {
+    backup::rename_backups_for_game(old_game_name, new_game_name)
+}
