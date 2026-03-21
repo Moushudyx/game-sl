@@ -15,7 +15,7 @@ export type HeaderBarProps = {
   onSelectSteamUID: (uid?: string) => void
   onReload: () => Promise<void>
   onRefreshPaths: () => Promise<void>
-  refreshingPaths: boolean
+  // refreshingPaths: boolean
   onAddGame?: () => void
 }
 
@@ -29,7 +29,7 @@ export function HeaderBar({
   onSelectSteamUID,
   onReload,
   onRefreshPaths,
-  refreshingPaths,
+  // refreshingPaths,
   onAddGame,
 }: HeaderBarProps) {
   return (

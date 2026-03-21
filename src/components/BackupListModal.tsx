@@ -67,53 +67,63 @@ export default function BackupListModal({
           <List
             dataSource={items}
             rowKey={(item) => item.fileName}
-            renderItem={(item) => (
-              <List.Item
-                actions={[
-                  <Button size="small" key="edit" onClick={() => onEdit(item)}>
-                    编辑
-                  </Button>,
-                  <Button
-                    size="small"
-                    key="delete"
-                    color="danger"
-                    loading={deletingKey === item.fileName}
-                    disabled={deletingKey === item.fileName}
-                    onClick={() => onDelete(item)}
-                  >
-                    删除
-                  </Button>,
-                  <Button size="small" key="restore" type="primary" onClick={() => onRestore(item)}>
-                    复原
-                  </Button>,
-                ]}
-              >
-                <List.Item.Meta
-                  title={
-                    <Space>
-                      <Text strong>{item.fileName}</Text>
-                      <Tag color={item.timeSource === 'file-name' ? 'blue' : 'gold'} variant="filled">
-                        {item.timeSource === 'file-name'
-                          ? '标准备份文件'
-                          : item.timeSource === 'modified-time'
-                          ? '其他备份文件'
-                          : '未知时间'}
-                      </Tag>
-                    </Space>
-                  }
-                  description={
-                    <Space orientation="vertical" size={0}>
-                      <Text type="secondary">
-                        时间：
-                        <RelativeTime value={item.timestamp} mode={useRelativeTime ? 'relative' : 'absolute'} />
-                      </Text>
-                      <Text type="secondary">大小：{formatSize(item.size)}</Text>
-                      <Text type="secondary">备注：{item.remark || '无'}</Text>
-                    </Space>
-                  }
-                />
-              </List.Item>
-            )}
+            renderItem={(item) => {
+              const canRestore = item.fileName.toLowerCase().endsWith('.zip')
+              return (
+                <List.Item
+                  actions={[
+                    <Button size="small" key="edit" onClick={() => onEdit(item)}>
+                      编辑
+                    </Button>,
+                    <Button
+                      size="small"
+                      key="delete"
+                      color="danger"
+                      loading={deletingKey === item.fileName}
+                      disabled={deletingKey === item.fileName}
+                      onClick={() => onDelete(item)}
+                    >
+                      删除
+                    </Button>,
+                    <Button
+                      size="small"
+                      key="restore"
+                      type="primary"
+                      disabled={!canRestore}
+                      title={canRestore ? undefined : '当前仅支持复原 .zip 备份'}
+                      onClick={() => onRestore(item)}
+                    >
+                      复原
+                    </Button>,
+                  ]}
+                >
+                  <List.Item.Meta
+                    title={
+                      <Space>
+                        <Text strong>{item.fileName}</Text>
+                        <Tag color={item.timeSource === 'file-name' ? 'blue' : 'gold'} variant="filled">
+                          {item.timeSource === 'file-name'
+                            ? '标准备份文件'
+                            : item.timeSource === 'modified-time'
+                              ? '其他备份文件'
+                              : '未知时间'}
+                        </Tag>
+                      </Space>
+                    }
+                    description={
+                      <Space orientation="vertical" size={0}>
+                        <Text type="secondary">
+                          时间：
+                          <RelativeTime value={item.timestamp} mode={useRelativeTime ? 'relative' : 'absolute'} />
+                        </Text>
+                        <Text type="secondary">大小：{formatSize(item.size)}</Text>
+                        <Text type="secondary">备注：{item.remark || '无'}</Text>
+                      </Space>
+                    }
+                  />
+                </List.Item>
+              )
+            }}
           />
         )}
       </Spin>

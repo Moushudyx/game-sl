@@ -105,7 +105,7 @@ export function GameEditorModal({
             label="游戏名称"
             name="name"
             rules={[
-              { required: true, message: '请输入游戏名称' },
+              // { required: true, message: '请输入游戏名称' },
               {
                 validator: (_, value) => {
                   const trimmed = (value ?? '').trim()
@@ -126,7 +126,7 @@ export function GameEditorModal({
             label="存档路径模板"
             name="path"
             rules={[
-              { required: true, message: '请输入存档路径' },
+              // { required: true, message: '请输入存档路径' },
               {
                 validator: (_, value) => {
                   const trimmed = (value ?? '').trim()
@@ -150,7 +150,7 @@ export function GameEditorModal({
           </Form.Item>
         </Form>
 
-        <Alert type="info" showIcon message="预览" description="下方预览会根据填写的名称、路径与图标实时更新" />
+        <Alert type="info" showIcon title="预览" description="创建前请仔细检查并确认" />
 
         <GameCard
           game={previewGame}

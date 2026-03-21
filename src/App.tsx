@@ -201,7 +201,7 @@ function App() {
           onSelectSteamUID={setSelectedSteamUID}
           onReload={refreshBaseInfo}
           onRefreshPaths={refreshPathState}
-          refreshingPaths={checkingPaths}
+          // refreshingPaths={checkingPaths}
           onAddGame={activePage === 'main' ? openCreateGame : undefined}
         />
         <Layout.Content className="app-body">

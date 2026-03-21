@@ -1,4 +1,4 @@
-import { Button, Divider, Flex, Space, Typography } from 'antd'
+import { /* Button, */ Divider, Flex, Space, Typography } from 'antd'
 
 type Props = {
   frontendVersion?: string

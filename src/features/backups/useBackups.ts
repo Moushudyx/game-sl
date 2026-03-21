@@ -206,6 +206,11 @@ export function useBackups({
   const handleRestore = (item: BackupEntry) => {
     if (!backupListTarget) return
 
+    if (!item.fileName.toLowerCase().endsWith('.zip')) {
+      messageApi.error('当前仅支持复原 .zip 备份文件')
+      return
+    }
+
     modal.confirm({
       title: `确认复原 ${backupListTarget.name} ？`,
       content: '复原会删除当前存档并解压所选备份，建议确保备份可靠。',
