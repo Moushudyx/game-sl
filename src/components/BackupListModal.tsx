@@ -59,6 +59,12 @@ export default function BackupListModal({
       footer={null}
       width={760}
       centered
+      styles={{
+        body: {
+          maxHeight: '70vh',
+          overflowY: 'auto',
+        },
+      }}
     >
       <Spin spinning={loading} tip="正在读取备份列表">
         {items.length === 0 ? (
